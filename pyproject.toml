@@ -35,7 +35,7 @@ classifiers = [
 
 [project.urls]
 Homepage = "https://nauticalcharts.noaa.gov/learn/nbs.html"
-Documentation: "https://nbs_uncles.readthedocs.io/""
+Documentation = "https://nbs_uncles.readthedocs.io/"
 
 [dependency-groups]
 dev = [
