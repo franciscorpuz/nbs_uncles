@@ -1,4 +1,12 @@
-# NBS UncLEs
+# NBS <span style="color:red">Unc</span><span style="color:rgb(0, 0, 255)">L</span><span style="color:#00ff00">Es</span> 
+![uncles](assets/nbs_uncles.png)
+
+
+
+"Feeling uncertain about that bathymetry? The UNCLES got you."  - Surveyor Uncle
+
+# NBS <span style="color:red">Unc</span>ertainty <span style="color:#00ff00">Es</span>timation <span style="color:rgb(0, 0, 255)">L</span>ibraries
+
 
 ## Motivation
 
