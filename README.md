@@ -1,5 +1,5 @@
-# NBS <span style="color:red">Unc</span><span style="color:rgb(0, 0, 255)">L</span><span style="color:#00ff00">Es</span> 
-![uncles](assets/nbs_uncles.png)
+# NBS <span style="color:red">Unc</span><span style="color:rgb(0, 0, 255)">L</span><span style="color:#00ff00">Es</span>
+![Alt text](https://raw.githubusercontent.com/franciscorpuz/nbs_uncles/refs/heads/main/assets/nbs_uncles.png)
 
 
 
@@ -132,3 +132,11 @@ nbs_ucnles
 NOAA - NOS
 National Bathymetric Source Project
 Link: https://nauticalcharts.noaa.gov/learn/nbs.html
+
+
+## Authors
+
+This project is actively maintained by:  
+Francis Corpuz - https://github.com/franciscorpuz  
+Elias Adediran - https://github.com/eliasadediran  
+Glen Rice - https://github.com/GlenRice-NOAA
