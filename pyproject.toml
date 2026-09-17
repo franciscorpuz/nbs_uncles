@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nbs_uncles"
-version = "0.0.1"
+version = "0.0.2"
 description = "Python Codes for UNCertainty EStimation Library"
 requires-python = "<3.13"
 dependencies = [
@@ -20,7 +20,9 @@ dependencies = [
     "tqdm",
 ]
 authors = [
-  {name = "Francis Corpuz", email = "francis.corpuz@yahoo.com"},
+  {name = "Francis Corpuz", email = "franciscorpuz@yahoo.com"},
+    {name = "Elias Adediran", email = "eliasadediran@gmail.com"},
+    {name = "Glen Rice", email = "glen.rice@noaa.gov"},
 ]
 readme = "README.md"
 license = "CC0-1.0"
@@ -39,6 +41,6 @@ Documentation = "https://nbs_uncles.readthedocs.io/"
 
 [dependency-groups]
 dev = [
-    "pytest",
+    "pytest"
 ]
 
