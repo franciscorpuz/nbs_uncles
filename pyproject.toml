@@ -23,6 +23,9 @@ dependencies = [
     "scikit-image",
     "scikit-learn",
     "tqdm",
+    "sphinx",
+    "sphinx_rtd_theme",
+    "myst-nb"
 ]
 readme = "README.md"
 license = "CC0-1.0"
