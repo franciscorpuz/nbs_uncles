@@ -4,17 +4,12 @@ build:
   os: "ubuntu-22.04"
   tools:
     python: "3.11"
+  jobs:
+    install:
+      - echo "Skipping automatic pip install to prevent GDAL compilation error."
 
 sphinx:
   configuration: docs/source/conf.py
-
-python:
-  install:
-    # Installs your package + NumPy so Sphinx can import it safely
-    - method: pip
-      path: .
-    # Installs Sphinx, the theme, and MyST-NB
-    - requirements: docs/requirements.txt
 
 conda:
   environment: environment.yml
