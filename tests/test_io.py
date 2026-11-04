@@ -4,7 +4,7 @@ import pytest
 import numpy as np
 from pathlib import Path
 
-from interpolation_uncertainty.io import read_file
+from nbs_uncles.io import read_file
 
 TEST_TIFF = Path(__file__).parent / "test_data" / "sample_tiff.tif"
 

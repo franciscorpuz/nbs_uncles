@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nbs_uncles"
-version = "0.0.2.3"
+version = "0.0.3"
 authors = [
     { name = "Francis Corpuz, Elias Adediran, Glen Rice", email = "franciscorpuz@yahoo.com" },
     { name = "Elias Adediran", email = "eliasadediran@gmail.com" },
