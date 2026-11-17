@@ -1,0 +1,599 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulation H13060 Example &mdash; nbs_uncles  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="nbs_uncles.visualization package" href="../nbs_uncles.visualization.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            nbs_uncles
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">API Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">nbs_uncles</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Sample Notebooks:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Simulation H13060 Example</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">nbs_uncles</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Simulation H13060 Example</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/demo/sim_H13060.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="simulation-h13060-example">
+<h1>Simulation H13060 Example<a class="headerlink" href="#simulation-h13060-example" title="Link to this heading"></a></h1>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">load_ext</span> autoreload
+<span class="o">%</span><span class="k">autoreload</span> 2
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="c1"># Automatically locate your active Miniconda environment's plugin directory</span>
+<span class="n">conda_prefix</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"CONDA_PREFIX"</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">conda_prefix</span><span class="p">:</span>
+    <span class="c1"># On Windows, Conda puts plugin DLLs in Library\bin\gdalplugins</span>
+    <span class="n">plugin_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">conda_prefix</span><span class="p">,</span> <span class="s2">"Library"</span><span class="p">,</span> <span class="s2">"lib"</span><span class="p">,</span> <span class="s2">"gdalplugins"</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"GDAL_DRIVER_PATH"</span><span class="p">]</span> <span class="o">=</span> <span class="n">plugin_path</span>
+    <span class="c1"># Append the main bin directory to the system PATH so dependencies load</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"PATH"</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">conda_prefix</span><span class="p">,</span> <span class="s2">"Library"</span><span class="p">,</span> <span class="s2">"lib"</span><span class="p">)</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">pathsep</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"PATH"</span><span class="p">]</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">nbs_uncles</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">read_file</span><span class="p">,</span> <span class="n">show_depth</span><span class="p">,</span>
+    <span class="n">build_coverage_mask</span><span class="p">,</span>
+    <span class="n">compute_local_orientation</span><span class="p">,</span>
+    <span class="n">undo_rotation</span><span class="p">,</span>
+    <span class="n">detect_trackline_positions</span><span class="p">,</span>
+    <span class="n">assign_depths_to_lines</span><span class="p">,</span>
+    <span class="n">build_uncertainty_raster</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># scikit-image functions used directly in notebook cells</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skimage.morphology</span><span class="w"> </span><span class="kn">import</span> <span class="n">opening</span><span class="p">,</span> <span class="n">thin</span><span class="p">,</span> <span class="n">disk</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p><strong>Trackline Detection</strong></p>
+<p>This notebook detects and extracts individual <strong>survey tracklines</strong> from a bathymetric raster by exploiting the linear spatial structure left by vessel survey passes.</p>
+<p><strong>Overall pipeline:</strong></p>
+<ol class="arabic simple">
+<li><p>Load the BAG raster</p></li>
+<li><p>Build a binary coverage mask.</p></li>
+<li><p>Apply morphological filtering to suppress blob-like dense coverage patches, leaving only thin linear trackline structures.</p></li>
+<li><p>Skeletonise the filtered image to single-pixel-width lines.</p></li>
+<li><p>Use the <strong>Radon transform</strong> to identify the dominant line orientations (angle peaks).</p></li>
+<li><p>Compute local angle orientation of points using PCA</p></li>
+<li><p>Iteratively extract line families: for each dominant angle, rotate the original bathymetry to align it to the vertical axis and sample the points that intersect with the vertical lines defined by the angle peaks</p></li>
+<li><p>For each extracted family, assign real depth values based on original data</p></li>
+<li><p>With each extracted family now consisting of parallel lines, we can process pairs of lines iteratively</p></li>
+</ol>
+<p>For each pair of lines:</p>
+<ol class="arabic simple" start="9">
+<li><p>Interpolated bathymetry values of there are gaps within the lines</p></li>
+<li><p>Compute the uncertainty for each line in the pair using the spectral energy using distance between the pair of lines as “linespacing”</p></li>
+<li><p>Divide each line into subsegments with lengths equal to linespacing and apply spectral energy computation on each subsegment resulting to 2D array of spectral energies</p></li>
+<li><p>Place the computed 2D arrays to the space between the line pairs</p></li>
+</ol>
+<p>After processing all line pairs:</p>
+<ol class="arabic simple" start="13">
+<li><p>Rotate the resulting raster back to its original orientation (negative of dominant angle)</p></li>
+<li><p>Plot the resulting raster</p></li>
+</ol>
+<ol class="arabic simple">
+<li><p>Load the BAG raster</p></li>
+</ol>
+<p>Load the BAG (Bathymetric Attributed Grid) raster file. The result is a dict containing the raw 2D depth array and metadata (geotransform, resolution, no-data value). No-data values are <strong>not</strong> masked on load — they are handled explicitly in subsequent steps.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fn</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"../data/raster/H13060_MB_4m_MLLW_3of3.bag"</span>
+<span class="n">bathy_data</span> <span class="o">=</span> <span class="n">read_file</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Visualize the loaded bathymetric data</span>
+<span class="n">show_depth</span><span class="p">(</span><span class="n">bathy_data</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">'viridis'</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>File '../data/raster/H13060_MB_4m_MLLW_3of3.bag' read successfully.
+Data shape: 2362 rows x 6506 columns
+No-data value: 1000000.0
+Resolution: 4.0 m/pixel
+Geotransform values--&gt; 
+Origin x-coordinate: 302698.0
+Pixel width: 4.0
+Row rotation: 0.0
+Origin y-coordinate: 3361470.0
+Column rotation: 0.0
+Pixel height: -4.0
+</pre></div>
+</div>
+<img alt="../_images/e2b1134aae76122e3293cc1060ed43b62b07d25bad92c2b7e34ccd21c89c8232.png" src="../_images/e2b1134aae76122e3293cc1060ed43b62b07d25bad92c2b7e34ccd21c89c8232.png" />
+</div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Build a binary coverage mask</p></li>
+</ol>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">bathy_binary</span> <span class="o">=</span> <span class="n">build_coverage_mask</span><span class="p">(</span><span class="n">bathy_data</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">bathy_binary</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">'gray'</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s1">'Valid Depth Data (1) vs No Data (0)'</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Binary Mask of Valid Depth Data"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/5301ebc8d83ce13fbbe35de931df6263fc7fe811284eade684ea4e1a35549bae.png" src="../_images/5301ebc8d83ce13fbbe35de931df6263fc7fe811284eade684ea4e1a35549bae.png" />
+</div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>Apply morphological filtering to suppress blob-like patches</p></li>
+<li><p>Skeletonise the filtered image to single-pixel-width lines</p></li>
+</ol>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Apply morphological thinning to the binary mask</span>
+<span class="c1"># Remove blob-like structures while preserving the skeleton of valid data</span>
+<span class="n">bathy_blobs</span> <span class="o">=</span> <span class="n">opening</span><span class="p">(</span><span class="n">bathy_binary</span><span class="p">,</span> <span class="n">disk</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>  <span class="c1"># Remove small blobs</span>
+<span class="n">bathy_lines</span> <span class="o">=</span> <span class="n">bathy_binary</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">bathy_blobs</span>  <span class="c1"># Keep only the line-like structures</span>
+<span class="n">bathy_thin</span> <span class="o">=</span> <span class="n">thin</span><span class="p">(</span><span class="n">bathy_lines</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">bathy_thin</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">'gray'</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Thinned Binary Mask"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s1">'Intensity'</span><span class="p">,</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/df4c985dbaf711a7308b7dec0f1de65da5b44a18b231374aebf043dd218812d6.png" src="../_images/df4c985dbaf711a7308b7dec0f1de65da5b44a18b231374aebf043dd218812d6.png" />
+</div>
+</div>
+<ol class="arabic simple" start="5">
+<li><p>Use the <strong>Radon transform</strong> to identify the dominant line orientations (angles).</p></li>
+</ol>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run the Radon transform over the full skeleton to identify the single most</span>
+<span class="c1"># prominent orientation. The variance profile peaks at angles where projections</span>
+<span class="c1"># are concentrated — characteristic of linear features aligned with that angle.</span>
+<span class="n">dominant_orientations</span> <span class="o">=</span> <span class="n">compute_dominant_angle_radon_transform</span><span class="p">(</span>
+    <span class="n">bathy_thin</span><span class="p">,</span> <span class="n">plot_profile_variance</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">circle</span><span class="o">=</span><span class="kc">False</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/5399f203c907d21226cf82f9ed0e04699313187988dac1835fae3f48d88798ec.png" src="../_images/5399f203c907d21226cf82f9ed0e04699313187988dac1835fae3f48d88798ec.png" />
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Dominant Orientations: </span><span class="si">{</span><span class="n">dominant_orientations</span><span class="p">[</span><span class="s1">'peaks'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dominant Orientations: [  1  91 118]
+</pre></div>
+</div>
+</div>
+</div>
+<ol class="arabic simple" start="6">
+<li><p>Compute local angle orientation of points using PCA</p></li>
+</ol>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">local_orientations</span> <span class="o">=</span> <span class="n">compute_local_orientation</span><span class="p">(</span>
+    <span class="n">binary_image</span><span class="o">=</span><span class="n">bathy_thin</span><span class="p">,</span>
+    <span class="n">line_length</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">num_neighbors</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+    <span class="n">plot_orientation</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">cmap</span> <span class="o">=</span> <span class="s1">'viridis'</span><span class="p">,</span>
+    <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>100%|██████████| 190761/190761 [02:14&lt;00:00, 1417.92it/s]
+</pre></div>
+</div>
+<img alt="../_images/aebd517d9a1853e4f4722c36cd13286adf107cb3d0925ac8f1e96103baa22b6b.png" src="../_images/aebd517d9a1853e4f4722c36cd13286adf107cb3d0925ac8f1e96103baa22b6b.png" />
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Compute histogram of local orientations</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="n">min_angle</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">local_orientations</span><span class="p">)</span>
+<span class="n">max_angle</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">local_orientations</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">local_orientations</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">local_orientations</span><span class="p">)]</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">bins</span><span class="o">=</span><span class="mi">180</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="p">(</span><span class="n">min_angle</span><span class="p">,</span> <span class="n">max_angle</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s1">'blue'</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Histogram of Local Orientations"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Orientation (degrees)"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Frequency"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="n">min_angle</span><span class="p">,</span> <span class="n">max_angle</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/f78cdc15866f5423d715fe4c9d09381ca7e1564f4580d9a6f5204899c79acbaf.png" src="../_images/f78cdc15866f5423d715fe4c9d09381ca7e1564f4580d9a6f5204899c79acbaf.png" />
+</div>
+</div>
+<ol class="arabic simple" start="6">
+<li><p>Iteratively extract line families: for each dominant angle, rotate the original bathymetry to align it to the vertical axis and sample the points that intersect with the vertical lines defined by the angle peaks</p></li>
+</ol>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">TARGET_ANGLES</span> <span class="o">=</span> <span class="n">dominant_orientations</span><span class="p">[</span><span class="s1">'peaks'</span><span class="p">]</span>
+
+<span class="c1"># Override detected TARGET_ANGLES as necessary</span>
+<span class="n">TARGET_ANGLES</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">91</span><span class="p">,</span> <span class="mi">118</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Use 10% of longest dimension as the minimum line length</span>
+<span class="c1"># this is a heuristic that captures the scale of features we expect to see</span>
+<span class="c1"># Adjust as needed for different datasets.</span>
+<span class="n">min_line_pct</span> <span class="o">=</span> <span class="mf">0.02</span>
+<span class="n">min_line_length</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">min_line_pct</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="n">bathy_thin</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Using min_line_length = </span><span class="si">{</span><span class="n">min_line_length</span><span class="si">}</span><span class="s2"> pixels "</span>
+      <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">min_line_pct</span><span class="o">*</span><span class="mi">100</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">% of max dimension)"</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">TARGET_ANGLES</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+    <span class="n">angle_search_window</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">TARGET_ANGLES</span><span class="p">)))</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+    <span class="n">TOLERANCE</span> <span class="o">=</span> <span class="n">angle_search_window</span> <span class="c1"># degrees of tolerance around each target angle</span>
+    <span class="n">TOLERANCE</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">TOLERANCE</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>  <span class="c1"># Ensure at least 5 degrees of tolerance</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">TOLERANCE</span> <span class="o">=</span> <span class="mi">5</span>
+
+<span class="n">angle_colors</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">viridis</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">TARGET_ANGLES</span><span class="p">)))</span>
+
+<span class="n">angles_rasters</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">angle</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">TARGET_ANGLES</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Extracting lines around </span><span class="si">{</span><span class="n">angle</span><span class="si">}</span><span class="s2">° ± </span><span class="si">{</span><span class="n">TOLERANCE</span><span class="si">}</span><span class="s2">°"</span><span class="p">)</span>
+    <span class="c1"># Extract lines near this angle</span>
+    <span class="n">low_bound</span> <span class="o">=</span> <span class="p">(</span><span class="n">angle</span> <span class="o">-</span> <span class="n">TOLERANCE</span><span class="p">)</span> <span class="o">%</span> <span class="mi">180</span>
+    <span class="n">high_bound</span> <span class="o">=</span> <span class="p">(</span><span class="n">angle</span> <span class="o">+</span> <span class="n">TOLERANCE</span><span class="p">)</span> <span class="o">%</span> <span class="mi">180</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Angle range: </span><span class="si">{</span><span class="n">low_bound</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">° to </span><span class="si">{</span><span class="n">high_bound</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">°"</span><span class="p">)</span>
+    <span class="c1"># Create a mask of pixels whose local orientation falls within this range</span>
+    <span class="k">if</span> <span class="n">low_bound</span> <span class="o">&lt;</span> <span class="n">high_bound</span><span class="p">:</span>
+        <span class="n">range_condition</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">local_orientations</span> <span class="o">&gt;=</span> <span class="n">low_bound</span><span class="p">,</span> 
+                                         <span class="n">local_orientations</span> <span class="o">&lt;</span> <span class="n">high_bound</span><span class="p">,</span>
+                                         <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">local_orientations</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">range_condition</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span><span class="n">local_orientations</span> <span class="o">&gt;=</span> <span class="n">low_bound</span><span class="p">,</span> 
+                                        <span class="n">local_orientations</span> <span class="o">&lt;</span> <span class="n">high_bound</span><span class="p">,</span>
+                                        <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">local_orientations</span><span class="p">))</span>
+        
+    <span class="n">angles_rasters</span><span class="p">[</span><span class="n">angle</span><span class="p">]</span> <span class="o">=</span> <span class="n">range_condition</span>
+    
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">30</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">range_condition</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">),</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">'gray'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Lines near </span><span class="si">{</span><span class="n">angle</span><span class="si">}</span><span class="s2">° ± </span><span class="si">{</span><span class="n">TOLERANCE</span><span class="si">}</span><span class="s2">°"</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+    
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Using min_line_length = 130 pixels (2.0% of max dimension)
+Extracting lines around 1° ± 5°
+  Angle range: 176.0° to 6.0°
+</pre></div>
+</div>
+<img alt="../_images/94da0e595ad2b35f50b85942d5a408badd2e4c448570dc8e8d4f4bdc0b10ff89.png" src="../_images/94da0e595ad2b35f50b85942d5a408badd2e4c448570dc8e8d4f4bdc0b10ff89.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Extracting lines around 91° ± 5°
+  Angle range: 86.0° to 96.0°
+</pre></div>
+</div>
+<img alt="../_images/207a6d759f7cc3aa932c1f3aab9efb6a1a33e7078bf5482d9a6701a01ab342fa.png" src="../_images/207a6d759f7cc3aa932c1f3aab9efb6a1a33e7078bf5482d9a6701a01ab342fa.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Extracting lines around 118° ± 5°
+  Angle range: 113.0° to 123.0°
+</pre></div>
+</div>
+<img alt="../_images/7d2b7d60e389cd034bce77b98eff2e5114dc3df6f870e344b152b92b283ea53f.png" src="../_images/7d2b7d60e389cd034bce77b98eff2e5114dc3df6f870e344b152b92b283ea53f.png" />
+</div>
+</div>
+<ol class="arabic simple" start="7">
+<li><p>For each extracted family, assign real depth values based on original data</p></li>
+<li><p>With each extracted family now consisting of parallel lines, we can process pairs of lines iteratively</p></li>
+</ol>
+<p>For each pair of lines:</p>
+<ol class="arabic simple" start="9">
+<li><p>Interpolated bathymetry values of there are gaps within the lines</p></li>
+<li><p>Compute the uncertainty for each line in the pair using the spectral energy using distance between the pair of lines as “linespacing”</p></li>
+<li><p>Divide each line into subsegments with lengths equal to linespacing and apply spectral energy computation on each subsegment resulting to 2D array of spectral energies</p></li>
+<li><p>Place the computed 2D arrays to the space between the line pairs</p></li>
+</ol>
+<p>After processing all line pairs:</p>
+<ol class="arabic simple" start="13">
+<li><p>Rotate the resulting raster back to its original orientation (negative of dominant angle)</p></li>
+<li><p>Plot the resulting raster</p></li>
+</ol>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">min_line_factor</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1"># fraction of max projection height used as the peak threshold</span>
+<span class="n">band_width</span>      <span class="o">=</span> <span class="mi">40</span>   <span class="c1"># minimum column separation between adjacent detected peaks (pixels)</span>
+
+<span class="n">uncertainty_results</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># keyed by angle — stores the final uncertainty raster per family</span>
+
+<span class="k">for</span> <span class="n">angle</span> <span class="ow">in</span> <span class="n">TARGET_ANGLES</span><span class="p">:</span>
+    <span class="n">current_mask</span> <span class="o">=</span> <span class="n">angles_rasters</span><span class="p">[</span><span class="n">angle</span><span class="p">]</span>
+
+    <span class="c1"># --- Steps 7–8: Detect trackline positions and build the clean line mask ---</span>
+    <span class="n">peaks</span><span class="p">,</span> <span class="n">restored_mask</span><span class="p">,</span> <span class="n">angle_to_rotate</span> <span class="o">=</span> <span class="n">detect_trackline_positions</span><span class="p">(</span>
+        <span class="n">angle_mask</span><span class="o">=</span><span class="n">current_mask</span><span class="p">,</span>
+        <span class="n">bathy_binary</span><span class="o">=</span><span class="n">bathy_binary</span><span class="p">,</span>
+        <span class="n">angle</span><span class="o">=</span><span class="n">angle</span><span class="p">,</span>
+        <span class="n">min_line_factor</span><span class="o">=</span><span class="n">min_line_factor</span><span class="p">,</span>
+        <span class="n">band_width</span><span class="o">=</span><span class="n">band_width</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Angle </span><span class="si">{</span><span class="n">angle</span><span class="si">}</span><span class="s2">°: detected </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">peaks</span><span class="p">)</span><span class="si">}</span><span class="s2"> tracklines at columns </span><span class="si">{</span><span class="n">peaks</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="c1"># Plot restored mask</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">restored_mask</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">'gray'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Single Line Trackline Mask"</span><span class="p">)</span>
+
+
+    <span class="c1"># Assign real depth values from bathy_data to each detected line pixel</span>
+    <span class="n">current_depth_raster</span> <span class="o">=</span> <span class="n">assign_depths_to_lines</span><span class="p">(</span>
+        <span class="n">restored_mask</span><span class="o">=</span><span class="n">restored_mask</span><span class="p">,</span>
+        <span class="n">bathy_binary</span><span class="o">=</span><span class="n">bathy_binary</span><span class="p">,</span>
+        <span class="n">bathy_data</span><span class="o">=</span><span class="n">bathy_data</span><span class="p">,</span>
+        <span class="n">angle_to_rotate</span><span class="o">=</span><span class="n">angle_to_rotate</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># --- Steps 9–12: Process all adjacent line pairs → uncertainty raster ---</span>
+    <span class="n">uncertainty_raster</span> <span class="o">=</span> <span class="n">build_uncertainty_raster</span><span class="p">(</span>
+        <span class="n">peaks</span><span class="o">=</span><span class="n">peaks</span><span class="p">,</span>
+        <span class="n">restored_mask</span><span class="o">=</span><span class="n">restored_mask</span><span class="p">,</span>
+        <span class="n">current_depth_raster</span><span class="o">=</span><span class="n">current_depth_raster</span><span class="p">,</span>
+        <span class="n">resolution</span><span class="o">=</span><span class="n">bathy_data</span><span class="p">[</span><span class="s1">'metadata'</span><span class="p">][</span><span class="s1">'resolution'</span><span class="p">],</span>
+    <span class="p">)</span>
+
+    <span class="c1"># --- Step 13: Rotate uncertainty raster back to original orientation ---</span>
+    <span class="n">uncertainty_original</span> <span class="o">=</span> <span class="n">undo_rotation</span><span class="p">(</span>
+        <span class="n">raster</span><span class="o">=</span><span class="n">uncertainty_raster</span><span class="p">,</span>
+        <span class="n">angle_to_rotate</span><span class="o">=</span><span class="n">angle_to_rotate</span><span class="p">,</span>
+        <span class="n">original_shape</span><span class="o">=</span><span class="n">current_mask</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">uncertainty_results</span><span class="p">[</span><span class="n">angle</span><span class="p">]</span> <span class="o">=</span> <span class="n">uncertainty_original</span>
+
+    <span class="c1"># --- Step 14: Plot ---</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">15</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">uncertainty_original</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">'viridis'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s1">'Uncertainty (m)'</span><span class="p">,</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Interpolation Uncertainty — Angle </span><span class="si">{</span><span class="n">angle</span><span class="si">}</span><span class="s1">°'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Angle 1°: detected 34 tracklines at columns [ 575  629  674  724  774  822  869  923  968 1018 1073 1122 1170 1226
+ 1276 1328 1377 1426 1476 1528 1578 1623 1678 1729 1774 1824 1880 1930
+ 1977 2030 2080 2121 2170 2222]
+</pre></div>
+</div>
+<img alt="../_images/141d6960c132cca01d4c49a9a511ade645f0e7d6103196db81f64002063043b0.png" src="../_images/141d6960c132cca01d4c49a9a511ade645f0e7d6103196db81f64002063043b0.png" />
+<img alt="../_images/b98c1bb9fc45feee54b2d85df710aeef4aaa033c912ebd5b787467453232efc5.png" src="../_images/b98c1bb9fc45feee54b2d85df710aeef4aaa033c912ebd5b787467453232efc5.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Angle 91°: detected 12 tracklines at columns [ 685 1386 2086 2787 3478 3965 4476 4981 5581 6018 6281 6404]
+</pre></div>
+</div>
+<img alt="../_images/0e77baf3280b054f17f6db2dbcecff5c2b9d68538f6d5234a12783871aaef65f.png" src="../_images/0e77baf3280b054f17f6db2dbcecff5c2b9d68538f6d5234a12783871aaef65f.png" />
+<img alt="../_images/86de06fa680a035d6de6df38e8adffa82d01604c5e67ec0ab20d360ca4e2d996.png" src="../_images/86de06fa680a035d6de6df38e8adffa82d01604c5e67ec0ab20d360ca4e2d996.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Angle 118°: detected 7 tracklines at columns [5470 5524 5574 5626 5672 5723 5774]
+</pre></div>
+</div>
+<img alt="../_images/0f9ac8292a2b4f254e1c071c680e40c54d2132712a61d3a778bf3ca746a74783.png" src="../_images/0f9ac8292a2b4f254e1c071c680e40c54d2132712a61d3a778bf3ca746a74783.png" />
+<img alt="../_images/4a643447341d18ff413c1d61586459902cfca64a8b31b7d408a7473bed488188.png" src="../_images/4a643447341d18ff413c1d61586459902cfca64a8b31b7d408a7473bed488188.png" />
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">## ── Method comparison ────────────────────────────────────────────────────────</span>
+<span class="c1"># Run the pipeline for every spectral method in compute_uncertainty and display</span>
+<span class="c1"># the resulting uncertainty rasters side-by-side so the effect of each method</span>
+<span class="c1"># on the uncertainty estimate can be assessed visually.</span>
+<span class="c1">#</span>
+<span class="c1"># Strategy:</span>
+<span class="c1">#   - detect_trackline_positions + assign_depths_to_lines are method-independent</span>
+<span class="c1">#     (pure geometry + depth lookup), so we compute them ONCE per angle and cache.</span>
+<span class="c1">#   - build_uncertainty_raster is then run for each method — fast because it</span>
+<span class="c1">#     only redoes the FFT step.</span>
+
+<span class="n">METHODS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'amplitude'</span><span class="p">,</span> <span class="s1">'psd'</span><span class="p">,</span> <span class="s1">'psd_n'</span><span class="p">,</span> <span class="s1">'psd_df'</span><span class="p">]</span>
+
+<span class="c1"># --- Step A: Cache geometry + depth for each angle (run once) ---</span>
+<span class="n">angle_cache</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">angle</span> <span class="ow">in</span> <span class="n">TARGET_ANGLES</span><span class="p">:</span>
+    <span class="n">current_mask</span> <span class="o">=</span> <span class="n">angles_rasters</span><span class="p">[</span><span class="n">angle</span><span class="p">]</span>
+    <span class="n">peaks</span><span class="p">,</span> <span class="n">restored_mask</span><span class="p">,</span> <span class="n">angle_to_rotate</span> <span class="o">=</span> <span class="n">detect_trackline_positions</span><span class="p">(</span>
+        <span class="n">angle_mask</span><span class="o">=</span><span class="n">current_mask</span><span class="p">,</span>
+        <span class="n">bathy_binary</span><span class="o">=</span><span class="n">bathy_binary</span><span class="p">,</span>
+        <span class="n">angle</span><span class="o">=</span><span class="n">angle</span><span class="p">,</span>
+        <span class="n">min_line_factor</span><span class="o">=</span><span class="n">min_line_factor</span><span class="p">,</span>
+        <span class="n">band_width</span><span class="o">=</span><span class="n">band_width</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">current_depth_raster</span> <span class="o">=</span> <span class="n">assign_depths_to_lines</span><span class="p">(</span>
+        <span class="n">restored_mask</span><span class="o">=</span><span class="n">restored_mask</span><span class="p">,</span>
+        <span class="n">bathy_binary</span><span class="o">=</span><span class="n">bathy_binary</span><span class="p">,</span>
+        <span class="n">bathy_data</span><span class="o">=</span><span class="n">bathy_data</span><span class="p">,</span>
+        <span class="n">angle_to_rotate</span><span class="o">=</span><span class="n">angle_to_rotate</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">angle_cache</span><span class="p">[</span><span class="n">angle</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">current_mask</span><span class="o">=</span><span class="n">current_mask</span><span class="p">,</span>
+        <span class="n">peaks</span><span class="o">=</span><span class="n">peaks</span><span class="p">,</span>
+        <span class="n">restored_mask</span><span class="o">=</span><span class="n">restored_mask</span><span class="p">,</span>
+        <span class="n">angle_to_rotate</span><span class="o">=</span><span class="n">angle_to_rotate</span><span class="p">,</span>
+        <span class="n">current_depth_raster</span><span class="o">=</span><span class="n">current_depth_raster</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- Step B: Loop over methods and plot a row of subplots per angle ---</span>
+<span class="n">resolution</span> <span class="o">=</span> <span class="n">bathy_data</span><span class="p">[</span><span class="s1">'metadata'</span><span class="p">][</span><span class="s1">'resolution'</span><span class="p">]</span>
+
+<span class="k">for</span> <span class="n">angle</span><span class="p">,</span> <span class="n">cache</span> <span class="ow">in</span> <span class="n">angle_cache</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">n_methods</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">METHODS</span><span class="p">)</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">n_methods</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span> <span class="o">*</span> <span class="n">n_methods</span><span class="p">),</span>
+                             <span class="n">constrained_layout</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Uncertainty method comparison — Angle </span><span class="si">{</span><span class="n">angle</span><span class="si">}</span><span class="s1">°'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">ax</span><span class="p">,</span> <span class="n">method</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">axes</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">METHODS</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Processing angle </span><span class="si">{</span><span class="n">angle</span><span class="si">}</span><span class="s2">° with method '</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">' with ax </span><span class="si">{</span><span class="n">ax</span><span class="si">}</span><span class="s2">..."</span><span class="p">)</span>
+        <span class="n">uncertainty_raster</span> <span class="o">=</span> <span class="n">build_uncertainty_raster</span><span class="p">(</span>
+            <span class="n">peaks</span><span class="o">=</span><span class="n">cache</span><span class="p">[</span><span class="s1">'peaks'</span><span class="p">],</span>
+            <span class="n">restored_mask</span><span class="o">=</span><span class="n">cache</span><span class="p">[</span><span class="s1">'restored_mask'</span><span class="p">],</span>
+            <span class="n">current_depth_raster</span><span class="o">=</span><span class="n">cache</span><span class="p">[</span><span class="s1">'current_depth_raster'</span><span class="p">],</span>
+            <span class="n">resolution</span><span class="o">=</span><span class="n">resolution</span><span class="p">,</span>
+            <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">uncertainty_original</span> <span class="o">=</span> <span class="n">undo_rotation</span><span class="p">(</span>
+            <span class="n">raster</span><span class="o">=</span><span class="n">uncertainty_raster</span><span class="p">,</span>
+            <span class="n">angle_to_rotate</span><span class="o">=</span><span class="n">cache</span><span class="p">[</span><span class="s1">'angle_to_rotate'</span><span class="p">],</span>
+            <span class="n">original_shape</span><span class="o">=</span><span class="n">cache</span><span class="p">[</span><span class="s1">'current_mask'</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">im</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">uncertainty_original</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">'viridis'</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">'off'</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span>
+                     <span class="n">label</span><span class="o">=</span><span class="s1">'m'</span> <span class="k">if</span> <span class="n">method</span> <span class="o">!=</span> <span class="s1">'amplitude'</span> <span class="k">else</span> <span class="s1">'m/√Hz'</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Processing angle 1° with method 'amplitude' with ax Axes(0.125,0.712609;0.775x0.167391)...
+Processing angle 1° with method 'psd' with ax Axes(0.125,0.511739;0.775x0.167391)...
+Processing angle 1° with method 'psd_n' with ax Axes(0.125,0.31087;0.775x0.167391)...
+Processing angle 1° with method 'psd_df' with ax Axes(0.125,0.11;0.775x0.167391)...
+Processing angle 91° with method 'amplitude' with ax Axes(0.125,0.712609;0.775x0.167391)...
+Processing angle 91° with method 'psd' with ax Axes(0.125,0.511739;0.775x0.167391)...
+Processing angle 91° with method 'psd_n' with ax Axes(0.125,0.31087;0.775x0.167391)...
+Processing angle 91° with method 'psd_df' with ax Axes(0.125,0.11;0.775x0.167391)...
+Processing angle 118° with method 'amplitude' with ax Axes(0.125,0.712609;0.775x0.167391)...
+Processing angle 118° with method 'psd' with ax Axes(0.125,0.511739;0.775x0.167391)...
+Processing angle 118° with method 'psd_n' with ax Axes(0.125,0.31087;0.775x0.167391)...
+Processing angle 118° with method 'psd_df' with ax Axes(0.125,0.11;0.775x0.167391)...
+</pre></div>
+</div>
+<img alt="../_images/7944320bfa01492851a385b8e8039ff782cf8e1dfefac98e786793b11105520e.png" src="../_images/7944320bfa01492851a385b8e8039ff782cf8e1dfefac98e786793b11105520e.png" />
+<img alt="../_images/57527e3494eab03011dad708e42b2ba70d89416ac209e9e22161779da2553135.png" src="../_images/57527e3494eab03011dad708e42b2ba70d89416ac209e9e22161779da2553135.png" />
+<img alt="../_images/1b11e8ba8e317c553455a41bef9dd591d66f6d6a13e966611f3d8f3dd093346a.png" src="../_images/1b11e8ba8e317c553455a41bef9dd591d66f6d6a13e966611f3d8f3dd093346a.png" />
+</div>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../nbs_uncles.visualization.html" class="btn btn-neutral float-left" title="nbs_uncles.visualization package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Francis Corpuz, Elias Edideran, Glen Rice.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

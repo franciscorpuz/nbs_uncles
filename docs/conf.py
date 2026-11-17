@@ -21,8 +21,11 @@ extensions =  [
     'sphinx.ext.autodoc',    # Pulls docstrings from your Python code
     'sphinx.ext.napoleon',   # Adds support for Google and NumPy docstrings
     'sphinx.ext.viewcode',   # Adds [source] links to generated API pages
-    'myst_parser',           # Adds support for Markdown files
+    'myst_nb',               # Adds support for Markdown files and Jupyter Notebooks
 ]
+
+# Prevent Sphinx from re-running your notebooks during make html
+nb_execution_mode = "off"
 
 html_theme = 'sphinx_rtd_theme'
 

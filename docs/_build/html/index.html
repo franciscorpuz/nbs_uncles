@@ -9,6 +9,7 @@
   <title>nbs_uncles documentation &mdash; nbs_uncles  documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
@@ -45,6 +46,10 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">nbs_uncles</a></li>
 </ul>
+<p class="caption" role="heading"><span class="caption-text">Sample Notebooks:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="demo/sim_H13060.html">Simulation H13060 Example</a></li>
+</ul>
 
         </div>
       </div>
@@ -72,9 +77,6 @@
              
   <section id="nbs-uncles-documentation">
 <h1>nbs_uncles documentation<a class="headerlink" href="#nbs-uncles-documentation" title="Link to this heading"></a></h1>
-<p>Add your content using <code class="docutils literal notranslate"><span class="pre">reStructuredText</span></code> syntax. See the
-<a class="reference external" href="https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html">reStructuredText</a>
-documentation for details.</p>
 <section id="nbs-uncles">
 <h2>NBS <span style="color:red">Unc</span><span style="color:rgb(0, 0, 255)">L</span><span style="color:#00ff00">Es</span><a class="headerlink" href="#nbs-uncles" title="Link to this heading"></a></h2>
 <p><img alt="Alt text" src="https://raw.githubusercontent.com/franciscorpuz/nbs_uncles/refs/heads/main/assets/nbs_uncles.png" /></p>
@@ -87,8 +89,8 @@ documentation for details.</p>
 <p>Fully surveying the seafloor at the resolution required for all navigational and scientific needs is often prohibitively costly. In practice, bathymetric surveys collect direct depth measurements along sparse survey lines and use interpolation to represent the seafloor between them. Like all scientific measurements, these depths require an associated uncertainty estimate — but for interpolated regions, that uncertainty must account for how much the true seafloor may depart from the interpolated value.</p>
 <p>The core challenge is that we have no direct measurements in the very regions we are trying to characterize. This library addresses that challenge by exploiting the spatial structure of nearby known bathymetry. Under an assumption of spatial isotropy — that the statistical character of the seafloor is consistent regardless of direction — the variance observed in sampled survey lines can be used to estimate the likely variance at different spatial scales across the interpolated gaps.</p>
 </section>
-<section id="what-interpolation-uncertainty-does">
-<h3>What interpolation_uncertainty does<a class="headerlink" href="#what-interpolation-uncertainty-does" title="Link to this heading"></a></h3>
+<section id="what-nbs-uncles-does">
+<h3>What NBS_UncLEs does<a class="headerlink" href="#what-nbs-uncles-does" title="Link to this heading"></a></h3>
 <p>NBS_UncLEs implements and compares two families of methods for making this estimate:</p>
 <p>Spectral methods analyze the power spectral density (PSD) of the seafloor along known survey lines. By cumulatively summing variance across spatial frequency bins — starting from the highest frequency and working toward scales matching the distance from a known measurement — these methods estimate the likely interpolation error at any given location.
 Spatial methods use sliding-window statistics (standard deviation, min/max envelopes, Gaussian smoothing) computed directly from the depth field to characterize local variability.
@@ -96,6 +98,9 @@ To evaluate and develop these methods, the library simulates sparse surveying on
 </section>
 <section id="installation">
 <h3>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h3>
+<p>Documentation: https://nbs_uncles.readthedocs.io/</p>
+<p><strong>Requirements:</strong> Python 3.10–3.12 and GDAL ≤ 3.11 (plus numpy, scipy, scikit-image,
+scikit-learn, matplotlib, tqdm — installed automatically).</p>
 <section id="quick-install-pip">
 <h4>Quick install (pip)<a class="headerlink" href="#quick-install-pip" title="Link to this heading"></a></h4>
 <p>If you just want to use the library without modifying it:</p>
@@ -123,22 +128,43 @@ so any changes you make to <code class="docutils literal notranslate"><span clas
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>env<span class="w"> </span>update<span class="w"> </span>-f<span class="w"> </span>environment.yml<span class="w"> </span>--prune
 </pre></div>
 </div>
+<p><code class="docutils literal notranslate"><span class="pre">environment.yml</span></code> is generated from <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>. If you change the dependencies there,
+regenerate it with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>scripts/sync_env_yml.py
+</pre></div>
+</div>
+</section>
+<section id="verify-the-install-and-run-the-tests">
+<h4>Verify the install and run the tests<a class="headerlink" href="#verify-the-install-and-run-the-tests" title="Link to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import nbs_uncles"</span>
+pip<span class="w"> </span>install<span class="w"> </span>pytest
+pytest
+</pre></div>
+</div>
+<p>The tests use a small committed fixture (<code class="docutils literal notranslate"><span class="pre">tests/test_data/sample_tiff.tif</span></code>), so no
+external data is required.</p>
 </section>
 </section>
 <section id="getting-started">
 <h3>Getting started<a class="headerlink" href="#getting-started" title="Link to this heading"></a></h3>
-<p>See the notebooks in <code class="docutils literal notranslate"><span class="pre">notebooks/</span></code> for usage examples. The primary working notebook is
-<code class="docutils literal notranslate"><span class="pre">uncertainty_sim_nbs_dataset.ipynb</span></code>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">nbs_uncles</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<p>The notebooks in <code class="docutils literal notranslate"><span class="pre">notebooks/</span></code> walk through the full workflow on real surveys (start with
+<code class="docutils literal notranslate"><span class="pre">uncertainty_sim_nbs_dataset.ipynb</span></code>). The sketch below shows the current API.</p>
+<blockquote>
+<div><p><strong>Note:</strong> Some notebooks still use the older orientation API
+(<code class="docutils literal notranslate"><span class="pre">compute_dominant_angle_radon_transform</span></code>); the example below is the up-to-date reference.</p>
+</div></blockquote>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skimage.morphology</span><span class="w"> </span><span class="kn">import</span> <span class="n">opening</span><span class="p">,</span> <span class="n">thin</span><span class="p">,</span> <span class="n">disk</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">nbs_uncles</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">read_file</span><span class="p">,</span> <span class="n">show_depth</span><span class="p">,</span>
     <span class="n">build_coverage_mask</span><span class="p">,</span>
-    <span class="n">compute_dominant_angle_radon_transform</span><span class="p">,</span> <span class="n">compute_local_orientation</span><span class="p">,</span>
+    <span class="n">compute_local_orientation</span><span class="p">,</span>
     <span class="n">detect_trackline_positions</span><span class="p">,</span> <span class="n">assign_depths_to_lines</span><span class="p">,</span>
     <span class="n">build_uncertainty_raster</span><span class="p">,</span> <span class="n">undo_rotation</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">skimage.morphology</span><span class="w"> </span><span class="kn">import</span> <span class="n">opening</span><span class="p">,</span> <span class="n">thin</span><span class="p">,</span> <span class="n">disk</span>
 
-<span class="c1"># 1. Load bathymetric raster</span>
+<span class="c1"># 1. Load bathymetric raster (GDAL: .tif / .tiff / .bag)</span>
 <span class="n">bathy_data</span> <span class="o">=</span> <span class="n">read_file</span><span class="p">(</span><span class="s2">"data/raster/H13060_MB_4m_MLLW_3of3.bag"</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">show_depth</span><span class="p">(</span><span class="n">bathy_data</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">'viridis'</span><span class="p">)</span>
 
@@ -149,20 +175,18 @@ so any changes you make to <code class="docutils literal notranslate"><span clas
 <span class="n">bathy_lines</span> <span class="o">=</span> <span class="n">bathy_binary</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">opening</span><span class="p">(</span><span class="n">bathy_binary</span><span class="p">,</span> <span class="n">disk</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
 <span class="n">bathy_thin</span> <span class="o">=</span> <span class="n">thin</span><span class="p">(</span><span class="n">bathy_lines</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
 
-<span class="c1"># 5. Radon transform to find dominant line orientations</span>
-<span class="n">dominant</span> <span class="o">=</span> <span class="n">compute_dominant_angle_radon_transform</span><span class="p">(</span><span class="n">bathy_thin</span><span class="p">,</span> <span class="n">circle</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="c1"># 5-6. Detect dominant line orientations (Radon transform) and label each</span>
+<span class="c1">#      skeleton pixel with the angle family it belongs to</span>
+<span class="n">orientations</span><span class="p">,</span> <span class="n">angle_info</span> <span class="o">=</span> <span class="n">compute_local_orientation</span><span class="p">(</span><span class="n">bathy_thin</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">'radon'</span><span class="p">)</span>
+<span class="c1"># orientations = {angle: float raster (NaN where not on that family), ..., 'combined': ...}</span>
 
-<span class="c1"># 6. PCA-based local angle estimation</span>
-<span class="n">local_orientations</span> <span class="o">=</span> <span class="n">compute_local_orientation</span><span class="p">(</span><span class="n">bathy_thin</span><span class="p">,</span> <span class="n">line_length</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">num_neighbors</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
-
-<span class="c1"># 7-14. For each dominant angle: detect lines, assign depths, compute uncertainty</span>
-<span class="k">for</span> <span class="n">angle</span> <span class="ow">in</span> <span class="n">dominant</span><span class="p">[</span><span class="s1">'peaks'</span><span class="p">]:</span>
-    <span class="c1"># Extract pixels near this angle</span>
-    <span class="n">low</span><span class="p">,</span> <span class="n">high</span> <span class="o">=</span> <span class="p">(</span><span class="n">angle</span> <span class="o">-</span> <span class="mi">5</span><span class="p">)</span> <span class="o">%</span> <span class="mi">180</span><span class="p">,</span> <span class="p">(</span><span class="n">angle</span> <span class="o">+</span> <span class="mi">5</span><span class="p">)</span> <span class="o">%</span> <span class="mi">180</span>
-    <span class="k">if</span> <span class="n">low</span> <span class="o">&lt;</span> <span class="n">high</span><span class="p">:</span>
-        <span class="n">angle_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">local_orientations</span> <span class="o">&gt;=</span> <span class="n">low</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">local_orientations</span> <span class="o">&lt;</span> <span class="n">high</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">angle_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">local_orientations</span> <span class="o">&gt;=</span> <span class="n">low</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">local_orientations</span> <span class="o">&lt;</span> <span class="n">high</span><span class="p">)</span>
+<span class="c1"># 7-14. For each angle family: detect lines, assign depths, compute uncertainty</span>
+<span class="n">resolution</span> <span class="o">=</span> <span class="n">bathy_data</span><span class="p">[</span><span class="s1">'metadata'</span><span class="p">][</span><span class="s1">'resolution'</span><span class="p">]</span>
+<span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">angle</span><span class="p">,</span> <span class="n">family</span> <span class="ow">in</span> <span class="n">orientations</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">angle</span> <span class="o">==</span> <span class="s1">'combined'</span><span class="p">:</span>
+        <span class="k">continue</span>
+    <span class="n">angle_mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">family</span><span class="p">)</span>
 
     <span class="c1"># Detect trackline positions and assign depth values</span>
     <span class="n">peaks</span><span class="p">,</span> <span class="n">restored_mask</span><span class="p">,</span> <span class="n">angle_to_rotate</span> <span class="o">=</span> <span class="n">detect_trackline_positions</span><span class="p">(</span>
@@ -172,27 +196,59 @@ so any changes you make to <code class="docutils literal notranslate"><span clas
         <span class="n">restored_mask</span><span class="p">,</span> <span class="n">bathy_binary</span><span class="p">,</span> <span class="n">bathy_data</span><span class="p">,</span> <span class="n">angle_to_rotate</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="c1"># Compute spectral uncertainty and rotate back to original orientation</span>
+    <span class="c1"># Spectral uncertainty in the gaps between line pairs, rotated back</span>
     <span class="n">uncertainty</span> <span class="o">=</span> <span class="n">build_uncertainty_raster</span><span class="p">(</span>
-        <span class="n">peaks</span><span class="p">,</span> <span class="n">restored_mask</span><span class="p">,</span> <span class="n">depth_raster</span><span class="p">,</span> <span class="n">bathy_data</span><span class="p">[</span><span class="s1">'metadata'</span><span class="p">][</span><span class="s1">'resolution'</span><span class="p">],</span>
+        <span class="n">peaks</span><span class="p">,</span> <span class="n">restored_mask</span><span class="p">,</span> <span class="n">depth_raster</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">'psd'</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="n">undo_rotation</span><span class="p">(</span><span class="n">uncertainty</span><span class="p">,</span> <span class="n">angle_to_rotate</span><span class="p">,</span> <span class="n">bathy_binary</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">results</span><span class="p">[</span><span class="n">angle</span><span class="p">]</span> <span class="o">=</span> <span class="n">undo_rotation</span><span class="p">(</span><span class="n">uncertainty</span><span class="p">,</span> <span class="n">angle_to_rotate</span><span class="p">,</span> <span class="n">bathy_binary</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 </pre></div>
 </div>
+<p><strong>Choosing methods</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">compute_local_orientation(...,</span> <span class="pre">method=)</span></code> accepts <code class="docutils literal notranslate"><span class="pre">'radon'</span></code> (recommended), <code class="docutils literal notranslate"><span class="pre">'pca'</span></code>
+(needs refactoring) and <code class="docutils literal notranslate"><span class="pre">'probabilistic'</span></code>. It returns <code class="docutils literal notranslate"><span class="pre">(point_orientations,</span> <span class="pre">angle_info)</span></code>;
+pass <code class="docutils literal notranslate"><span class="pre">angle_info</span></code> back in (Radon) to skip recomputing the sinogram.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">build_uncertainty_raster(...,</span> <span class="pre">method=)</span></code> accepts the spectral methods <code class="docutils literal notranslate"><span class="pre">'psd'</span></code> (default),
+<code class="docutils literal notranslate"><span class="pre">'amplitude'</span></code>, <code class="docutils literal notranslate"><span class="pre">'psd_n'</span></code>, <code class="docutils literal notranslate"><span class="pre">'psd_lf'</span></code> and <code class="docutils literal notranslate"><span class="pre">'psd_df'</span></code>.</p></li>
+</ul>
+<p><strong>Estimator registry.</strong> Estimators live in a registry in <code class="docutils literal notranslate"><span class="pre">nbs_uncles.methods</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">nbs_uncles.methods</span><span class="w"> </span><span class="kn">import</span> <span class="n">list_estimators</span><span class="p">,</span> <span class="n">get_estimator</span><span class="p">,</span> <span class="n">register</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">list_estimators</span><span class="p">())</span>   <span class="c1"># spectral: 'psd', 'amplitude', ...; statistical: 'SAR', 'SER', 'SMR'</span>
+
+<span class="nd">@register</span><span class="p">(</span><span class="s1">'my_method'</span><span class="p">)</span>     <span class="c1"># or drop a .py file with this decorator into src/nbs_uncles/methods/</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">my_estimator</span><span class="p">(</span><span class="n">signal</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="n">line_spacing</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="o">...</span>                    <span class="c1"># return (energy[n_segments, n_freqs], frequencies[n_freqs])</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note:</strong> <code class="docutils literal notranslate"><span class="pre">process_line_pair</span></code> / <code class="docutils literal notranslate"><span class="pre">build_uncertainty_raster</span></code> currently call the spectral
+estimator directly, so the statistical (<code class="docutils literal notranslate"><span class="pre">SAR</span></code>/<code class="docutils literal notranslate"><span class="pre">SER</span></code>/<code class="docutils literal notranslate"><span class="pre">SMR</span></code>) and custom estimators are
+available through the registry but are not yet wired into the pipeline.</p>
+</div></blockquote>
 <section id="package-structure">
 <h4>Package structure<a class="headerlink" href="#package-structure" title="Link to this heading"></a></h4>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>nbs_ucnles
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>nbs_uncles
 ├── io              — read_file (GDAL-backed raster/BAG I/O)
 ├── visualization   — show_depth (plotting)
 ├── preprocessing
 │   ├── morphology  — build_coverage_mask, morphological filters
-│   ├── orientation — Radon transform, PCA-based local angles
-│   └── geometry    — point rotation, undo_rotation
-├── methods         — compute_uncertainty (FFT/PSD spectral energy)
-└── pipeline        — detect_trackline_positions, assign_depths_to_lines,
-                      process_line_pair, build_uncertainty_raster
+│   ├── orientation — compute_local_orientation (dispatches to orientation/ by method=)
+│   └── geometry    — rotate_points, update_geotransform, refine_cluster_rotation,
+│                     undo_rotation, x_distance
+├── orientation     — orientation_via_Radon (recommended), orientation_via_PCA,
+│                     orientation_via_Probabilistic, orientation_utils
+├── methods         — estimator registry: register, get_estimator, list_estimators
+│   ├── spectral    — spectral_estimator (FFT/PSD: amplitude, psd, psd_n, psd_lf, psd_df)
+│   └── statistical — statistical_estimator (sliding-window SAR, SER, SMR)
+└── pipeline
+    ├── tracklines  — detect_trackline_positions, assign_depths_to_lines
+    └── uncertainty — process_line_pair, build_uncertainty_raster
 </pre></div>
 </div>
+<p>Other top-level folders: <code class="docutils literal notranslate"><span class="pre">notebooks/</span></code> (worked examples), <code class="docutils literal notranslate"><span class="pre">tests/</span></code> (pytest suite and
+fixture), <code class="docutils literal notranslate"><span class="pre">docs/</span></code> (Sphinx / Read the Docs), <code class="docutils literal notranslate"><span class="pre">scripts/</span></code> (<code class="docutils literal notranslate"><span class="pre">sync_env_yml.py</span></code>),
+<code class="docutils literal notranslate"><span class="pre">config/</span></code> (<code class="docutils literal notranslate"><span class="pre">config.ini</span></code>) and <code class="docutils literal notranslate"><span class="pre">data/raster/</span></code> (sample surveys).</p>
 </section>
 </section>
 <section id="how-to-cite-nbs-uncles">
@@ -216,6 +272,12 @@ Glen Rice - https://github.com/GlenRice-NOAA</p>
 <li class="toctree-l2"><a class="reference internal" href="nbs_uncles.html">nbs_uncles package</a></li>
 </ul>
 </li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Sample Notebooks:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="demo/sim_H13060.html">Simulation H13060 Example</a></li>
 </ul>
 </div>
 </section>

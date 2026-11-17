@@ -14,7 +14,7 @@ Fully surveying the seafloor at the resolution required for all navigational and
 
 The core challenge is that we have no direct measurements in the very regions we are trying to characterize. This library addresses that challenge by exploiting the spatial structure of nearby known bathymetry. Under an assumption of spatial isotropy — that the statistical character of the seafloor is consistent regardless of direction — the variance observed in sampled survey lines can be used to estimate the likely variance at different spatial scales across the interpolated gaps.
 
-## What interpolation_uncertainty does
+## What NBS_UncLEs does
 
 NBS_UncLEs implements and compares two families of methods for making this estimate:
 
@@ -23,6 +23,11 @@ Spatial methods use sliding-window statistics (standard deviation, min/max envel
 To evaluate and develop these methods, the library simulates sparse surveying on full-coverage raster datasets: it subsamples every N-th column as a synthetic survey line, linearly interpolates across the gaps, and computes the true residual between the interpolated and actual seafloor. This residual serves as ground truth for validating each uncertainty estimate across different seafloor types (flat, rough, sloped).
 
 ## Installation
+
+Documentation: https://nbs_uncles.readthedocs.io/
+
+**Requirements:** Python 3.10–3.12 and GDAL ≤ 3.11 (plus numpy, scipy, scikit-image,
+scikit-learn, matplotlib, tqdm — installed automatically).
 
 ### Quick install (pip)
 
@@ -56,22 +61,45 @@ To update your environment after a `git pull`:
 conda env update -f environment.yml --prune
 ```
 
+`environment.yml` is generated from `pyproject.toml`. If you change the dependencies there,
+regenerate it with:
+
+```bash
+python scripts/sync_env_yml.py
+```
+
+### Verify the install and run the tests
+
+```bash
+python -c "import nbs_uncles"
+pip install pytest
+pytest
+```
+
+The tests use a small committed fixture (`tests/test_data/sample_tiff.tif`), so no
+external data is required.
+
 ## Getting started
 
-See the notebooks in `notebooks/` for usage examples. The primary working notebook is
-`uncertainty_sim_nbs_dataset.ipynb`.
+The notebooks in `notebooks/` walk through the full workflow on real surveys (start with
+`uncertainty_sim_nbs_dataset.ipynb`). The sketch below shows the current API.
+
+> **Note:** Some notebooks still use the older orientation API
+> (`compute_dominant_angle_radon_transform`); the example below is the up-to-date reference.
 
 ```python
+import numpy as np
+from skimage.morphology import opening, thin, disk
+
 from nbs_uncles import (
     read_file, show_depth,
     build_coverage_mask,
-    compute_dominant_angle_radon_transform, compute_local_orientation,
+    compute_local_orientation,
     detect_trackline_positions, assign_depths_to_lines,
     build_uncertainty_raster, undo_rotation,
 )
-from skimage.morphology import opening, thin, disk
 
-# 1. Load bathymetric raster
+# 1. Load bathymetric raster (GDAL: .tif / .tiff / .bag)
 bathy_data = read_file("data/raster/H13060_MB_4m_MLLW_3of3.bag", verbose=True)
 show_depth(bathy_data, cmap='viridis')
 
@@ -82,20 +110,18 @@ bathy_binary = build_coverage_mask(bathy_data)
 bathy_lines = bathy_binary & ~opening(bathy_binary, disk(5))
 bathy_thin = thin(bathy_lines) > 0
 
-# 5. Radon transform to find dominant line orientations
-dominant = compute_dominant_angle_radon_transform(bathy_thin, circle=False)
+# 5-6. Detect dominant line orientations (Radon transform) and label each
+#      skeleton pixel with the angle family it belongs to
+orientations, angle_info = compute_local_orientation(bathy_thin, method='radon')
+# orientations = {angle: float raster (NaN where not on that family), ..., 'combined': ...}
 
-# 6. PCA-based local angle estimation
-local_orientations = compute_local_orientation(bathy_thin, line_length=50, num_neighbors=20)
-
-# 7-14. For each dominant angle: detect lines, assign depths, compute uncertainty
-for angle in dominant['peaks']:
-    # Extract pixels near this angle
-    low, high = (angle - 5) % 180, (angle + 5) % 180
-    if low < high:
-        angle_mask = (local_orientations >= low) & (local_orientations < high)
-    else:
-        angle_mask = (local_orientations >= low) | (local_orientations < high)
+# 7-14. For each angle family: detect lines, assign depths, compute uncertainty
+resolution = bathy_data['metadata']['resolution']
+results = {}
+for angle, family in orientations.items():
+    if angle == 'combined':
+        continue
+    angle_mask = ~np.isnan(family)
 
     # Detect trackline positions and assign depth values
     peaks, restored_mask, angle_to_rotate = detect_trackline_positions(
@@ -105,27 +131,61 @@ for angle in dominant['peaks']:
         restored_mask, bathy_binary, bathy_data, angle_to_rotate,
     )
 
-    # Compute spectral uncertainty and rotate back to original orientation
+    # Spectral uncertainty in the gaps between line pairs, rotated back
     uncertainty = build_uncertainty_raster(
-        peaks, restored_mask, depth_raster, bathy_data['metadata']['resolution'],
+        peaks, restored_mask, depth_raster, resolution, method='psd',
     )
-    result = undo_rotation(uncertainty, angle_to_rotate, bathy_binary.shape)
+    results[angle] = undo_rotation(uncertainty, angle_to_rotate, bathy_binary.shape)
 ```
+
+**Choosing methods**
+
+- `compute_local_orientation(..., method=)` accepts `'radon'` (recommended), `'pca'`
+  (needs refactoring) and `'probabilistic'`. It returns `(point_orientations, angle_info)`;
+  pass `angle_info` back in (Radon) to skip recomputing the sinogram.
+- `build_uncertainty_raster(..., method=)` accepts the spectral methods `'psd'` (default),
+  `'amplitude'`, `'psd_n'`, `'psd_lf'` and `'psd_df'`.
+
+**Estimator registry.** Estimators live in a registry in `nbs_uncles.methods`:
+
+```python
+from nbs_uncles.methods import list_estimators, get_estimator, register
+
+print(list_estimators())   # spectral: 'psd', 'amplitude', ...; statistical: 'SAR', 'SER', 'SMR'
+
+@register('my_method')     # or drop a .py file with this decorator into src/nbs_uncles/methods/
+def my_estimator(signal, resolution, line_spacing, **kwargs):
+    ...                    # return (energy[n_segments, n_freqs], frequencies[n_freqs])
+```
+
+> **Note:** `process_line_pair` / `build_uncertainty_raster` currently call the spectral
+> estimator directly, so the statistical (`SAR`/`SER`/`SMR`) and custom estimators are
+> available through the registry but are not yet wired into the pipeline.
 
 ### Package structure
 
 ```
-nbs_ucnles
+nbs_uncles
 ├── io              — read_file (GDAL-backed raster/BAG I/O)
 ├── visualization   — show_depth (plotting)
 ├── preprocessing
 │   ├── morphology  — build_coverage_mask, morphological filters
-│   ├── orientation — Radon transform, PCA-based local angles
-│   └── geometry    — point rotation, undo_rotation
-├── methods         — compute_uncertainty (FFT/PSD spectral energy)
-└── pipeline        — detect_trackline_positions, assign_depths_to_lines,
-                      process_line_pair, build_uncertainty_raster
+│   ├── orientation — compute_local_orientation (dispatches to orientation/ by method=)
+│   └── geometry    — rotate_points, update_geotransform, refine_cluster_rotation,
+│                     undo_rotation, x_distance
+├── orientation     — orientation_via_Radon (recommended), orientation_via_PCA,
+│                     orientation_via_Probabilistic, orientation_utils
+├── methods         — estimator registry: register, get_estimator, list_estimators
+│   ├── spectral    — spectral_estimator (FFT/PSD: amplitude, psd, psd_n, psd_lf, psd_df)
+│   └── statistical — statistical_estimator (sliding-window SAR, SER, SMR)
+└── pipeline
+    ├── tracklines  — detect_trackline_positions, assign_depths_to_lines
+    └── uncertainty — process_line_pair, build_uncertainty_raster
 ```
+
+Other top-level folders: `notebooks/` (worked examples), `tests/` (pytest suite and
+fixture), `docs/` (Sphinx / Read the Docs), `scripts/` (`sync_env_yml.py`),
+`config/` (`config.ini`) and `data/raster/` (sample surveys).
 
 ## How to cite nbs_uncles
 
