@@ -1,0 +1,691 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>nbs_uncles.orientation.orientation_via_Probabilistic &mdash; nbs_uncles  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            nbs_uncles
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">API Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">nbs_uncles</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">nbs_uncles</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">nbs_uncles.orientation.orientation_via_Probabilistic</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for nbs_uncles.orientation.orientation_via_Probabilistic</h1><div class="highlight"><pre>
+<span></span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.signal</span><span class="w"> </span><span class="kn">import</span> <span class="n">find_peaks</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skimage.transform</span><span class="w"> </span><span class="kn">import</span> <span class="n">radon</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.decomposition</span><span class="w"> </span><span class="kn">import</span> <span class="n">PCA</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.spatial</span><span class="w"> </span><span class="kn">import</span> <span class="n">KDTree</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">deque</span>
+
+<span class="c1">### WARNING: Needs extensive refactoring and testing</span>
+<span class="c1">### Use orientation_via_Radon for the meantime</span>
+
+<div class="viewcode-block" id="orientation_via_probabilistic_line">
+<a class="viewcode-back" href="../../../nbs_uncles.orientation.html#nbs_uncles.orientation.orientation_via_Probabilistic.orientation_via_probabilistic_line">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">orientation_via_probabilistic_line</span><span class="p">(</span><span class="n">binary_image</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+                                        <span class="n">test_angles</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                                        <span class="n">circle</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+                                        <span class="n">tol</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+                                        <span class="n">precomputed_theta</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="c1"># tuple[float, np.ndarray]</span>
+<span class="w">    </span><span class="sd">"""Find the dominant orientation of linear features using the Radon transform.</span>
+
+<span class="sd">    Computes the Radon sinogram over ``test_angles`` and returns the angle whose</span>
+<span class="sd">    projection column has the highest variance. High variance indicates that</span>
+<span class="sd">    projections along that angle produce concentrated bright lines, which is</span>
+<span class="sd">    characteristic of linear features aligned with that orientation.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    image : np.ndarray</span>
+<span class="sd">        Binary image containing linear features.</span>
+<span class="sd">    test_angles : np.ndarray, optional</span>
+<span class="sd">        Angles in degrees at which to compute the Radon transform. If ``None``,</span>
+<span class="sd">        180 angles uniformly spaced over ``[0°, 180°)`` are used.</span>
+<span class="sd">    circle : bool, optional</span>
+<span class="sd">        If ``True``, only pixels within the inscribed circle are projected</span>
+<span class="sd">        (matches the skimage default). Default is ``True``.</span>
+<span class="sd">    tol : int | None, optional</span>
+<span class="sd">        Half-width in degrees of the suppression band around each angle in</span>
+<span class="sd">        ``remove_angles``. Default is 5.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    theta_info : dict</span>
+<span class="sd">        Dictionary with keys:</span>
+
+<span class="sd">        - ``'peaks'`` : np.ndarray of float — dominant angle(s) in degrees,</span>
+<span class="sd">          sorted by descending prominence.</span>
+<span class="sd">        - ``'widths_in_degrees'`` : np.ndarray of float — FWHM of each peak</span>
+<span class="sd">          in degrees.</span>
+<span class="sd">        - ``'profile_variance'`` : np.ndarray of float — variance profile</span>
+<span class="sd">          over all tested angles (rolled so index 0 corresponds to 0°).</span>
+<span class="sd">    angle_profile : np.ndarray</span>
+<span class="sd">        histogram of the angle scores detected by 'radon'</span>
+<span class="sd">    """</span>
+
+    <span class="n">X_linear</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">binary_image</span><span class="p">)</span>
+    <span class="n">x_coords</span> <span class="o">=</span> <span class="n">X_linear</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># columns</span>
+    <span class="n">y_coords</span> <span class="o">=</span> <span class="n">X_linear</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>  <span class="c1"># rows</span>
+    <span class="k">if</span> <span class="n">precomputed_theta</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">test_angles</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">180.</span><span class="p">,</span> <span class="mi">180</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Using pre-computed angles: </span><span class="si">{</span><span class="n">precomputed_theta</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">theta</span> <span class="o">=</span> <span class="n">test_angles</span>
+
+        <span class="c1"># Compute the Radon transform (sinogram) and the variance of each projection column</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Computing Radon transform..."</span><span class="p">)</span>
+        <span class="n">sinogram</span> <span class="o">=</span> <span class="n">radon</span><span class="p">(</span><span class="n">binary_image</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">theta</span><span class="p">,</span> <span class="n">circle</span><span class="o">=</span><span class="n">circle</span><span class="p">)</span>
+        <span class="n">profile_variance</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">sinogram</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">profile_variance_roll</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">profile_variance</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="mi">90</span><span class="p">)</span> <span class="o">%</span> <span class="mi">180</span>
+        <span class="n">log_profile_variance_roll</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="n">profile_variance_roll</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Radon Computation Done."</span><span class="p">)</span>
+
+        <span class="c1"># Plot profile variance</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">profile_variance_roll</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Profile Variance"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Angle (degrees)"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Variance"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Variance Profile"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">log_profile_variance_roll</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Log Profile Variance"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Angle (degrees)"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Log Variance"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Variance Profile"</span><span class="p">)</span>
+
+        <span class="n">peaks</span><span class="p">,</span> <span class="n">properties</span> <span class="o">=</span> <span class="n">find_peaks</span><span class="p">(</span><span class="n">log_profile_variance_roll</span><span class="p">,</span> <span class="n">distance</span><span class="o">=</span><span class="n">tol</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="n">prominence</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Detected peaks:</span><span class="si">{</span><span class="n">peaks</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">peaks</span> <span class="o">=</span> <span class="n">precomputed_theta</span><span class="p">[</span><span class="s1">'peaks'</span><span class="p">]</span>
+        <span class="n">profile_variance</span> <span class="o">=</span> <span class="n">precomputed_theta</span><span class="p">[</span><span class="s1">'profile_variance'</span><span class="p">]</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Labeling points..."</span><span class="p">)</span>
+    <span class="n">labels</span><span class="p">,</span> <span class="n">peak_centers_per_angle</span> <span class="o">=</span> <span class="n">label_points_by_probabilistic_line</span><span class="p">(</span><span class="n">x_coords</span><span class="p">,</span>
+                                                           <span class="n">y_coords</span><span class="p">,</span>
+                                                           <span class="n">peaks</span><span class="p">,</span>
+                                                           <span class="n">bin_width</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span>
+                                                           <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span>
+                                                           <span class="n">chain_length</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Labeling points... Done."</span><span class="p">)</span>
+
+
+    <span class="n">point_orientations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">binary_image</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">labels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">point_orientations</span><span class="p">[</span><span class="n">X_linear</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">X_linear</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">peaks</span><span class="p">[</span><span class="n">labels</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+
+    <span class="c1"># # Deduct 90 degrees to remove effect of radon transform's 90-degree shift between image and sinogram angles</span>
+    <span class="c1"># peaks = (peaks - 90) % 180</span>
+    <span class="c1">#</span>
+    <span class="c1"># print(f"Detected peaks:{peaks}")</span>
+    <span class="c1">#</span>
+    <span class="c1"># # Adjust the profile variance (x-axis) to correspond with the correction above</span>
+    <span class="c1"># profile_variance = np.roll(profile_variance, len(theta) // 2)</span>
+
+    <span class="n">theta_info</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"peaks"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">peaks</span><span class="p">),</span>
+        <span class="c1"># "widths_in_degrees": np.array(widths_in_degrees),</span>
+        <span class="s2">"profile_variance"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">profile_variance</span><span class="p">),</span>
+    <span class="p">}</span>
+
+
+    <span class="k">return</span> <span class="n">point_orientations</span><span class="p">,</span> <span class="n">theta_info</span></div>
+
+
+
+
+
+<div class="viewcode-block" id="label_points_by_angle">
+<a class="viewcode-back" href="../../../nbs_uncles.orientation.html#nbs_uncles.orientation.orientation_via_Probabilistic.label_points_by_angle">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">label_points_by_angle</span><span class="p">(</span><span class="n">x</span><span class="p">,</span>
+                          <span class="n">y</span><span class="p">,</span>
+                          <span class="n">theta_degs</span><span class="p">,</span>
+                          <span class="n">bin_width</span><span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+                          <span class="n">tol</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span>
+                          <span class="n">min_peak_prominence</span><span class="o">=</span> <span class="mi">5</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Assign each point to its closest trackline family across all dominant angles.</span>
+
+<span class="sd">    For each image-convention angle φ in ``theta_degs`` the function converts</span>
+<span class="sd">    back to the sinogram projection angle (φ + 90°) so that points on the same</span>
+<span class="sd">    trackline produce the same ρ value, then finds trackline centers in ρ-space</span>
+<span class="sd">    via a histogram peak search.  Each point is assigned to the angle family</span>
+<span class="sd">    whose nearest trackline center is closest; points whose best distance</span>
+<span class="sd">    exceeds ``tol`` are labelled −1.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x, y : array-like</span>
+<span class="sd">        Column and row coordinates of foreground pixels.</span>
+<span class="sd">    theta_degs : array-like</span>
+<span class="sd">        Image-convention dominant angles in degrees (as returned by</span>
+<span class="sd">        ``compute_local_orientation_via_radon`` after the −90° correction).</span>
+<span class="sd">    bin_width : float</span>
+<span class="sd">        Histogram bin width in pixels for the ρ projection.</span>
+<span class="sd">    tol : float</span>
+<span class="sd">        Maximum ρ-distance from a trackline center to count as membership.</span>
+<span class="sd">    min_peak_prominence : float</span>
+<span class="sd">        Passed to ``scipy.signal.find_peaks``; tune to point density.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    labels : np.ndarray of int</span>
+<span class="sd">        Per-point index into ``theta_degs`` (i.e. the assigned angle family),</span>
+<span class="sd">        or −1 if the point is unassigned.</span>
+<span class="sd">    all_peak_centers : list of np.ndarray</span>
+<span class="sd">        Refined ρ trackline centers for each angle in ``theta_degs``.</span>
+<span class="sd">    """</span>
+    <span class="n">theta_degs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta_degs</span><span class="p">)</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">n_points</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">all_rho</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">all_peak_centers</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">phi</span> <span class="ow">in</span> <span class="n">theta_degs</span><span class="p">:</span>
+        <span class="c1"># Convert image angle back to sinogram projection angle so that</span>
+        <span class="c1"># ρ = x·cos(θ_s) + y·sin(θ_s) clusters points on the same trackline.</span>
+        <span class="c1"># Example: φ=90° (vertical lines) → θ_s=0° → ρ=x (column index) ✓</span>
+        <span class="c1"># theta_s = np.deg2rad((phi + 90) % 180)</span>
+
+
+        <span class="n">theta_s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">((</span><span class="n">phi</span> <span class="o">+</span> <span class="mi">90</span><span class="p">)</span> <span class="o">%</span> <span class="mi">180</span><span class="p">)</span>
+        <span class="n">rho</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta_s</span><span class="p">)</span> <span class="o">+</span> <span class="n">y</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta_s</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"phi: </span><span class="si">{</span><span class="n">phi</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"theta_s: </span><span class="si">{</span><span class="n">theta_s</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"rho: </span><span class="si">{</span><span class="n">rho</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">all_rho</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rho</span><span class="p">)</span>
+
+        <span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">rho</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">rho</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">+</span> <span class="n">bin_width</span><span class="p">,</span> <span class="n">bin_width</span><span class="p">)</span>
+        <span class="n">counts</span><span class="p">,</span> <span class="n">edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">rho</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">bins</span><span class="p">)</span>
+        <span class="n">bin_centers</span> <span class="o">=</span> <span class="p">(</span><span class="n">edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span> <span class="o">/</span> <span class="mi">2</span>
+
+        <span class="c1"># Plot histogram</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">counts</span><span class="p">)</span>
+        <span class="c1"># plt.hist(counts, bins=bins)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Count"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Rho (pixels)"</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Rho histogram, theta:</span><span class="si">{</span><span class="n">phi</span><span class="si">}</span><span class="s2"> "</span><span class="p">)</span>
+
+        <span class="n">peak_idx</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">find_peaks</span><span class="p">(</span><span class="n">counts</span><span class="p">,</span> <span class="n">prominence</span><span class="o">=</span><span class="n">min_peak_prominence</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">peak_idx</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">all_peak_centers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([]))</span>
+            <span class="k">continue</span>
+
+        <span class="n">raw_centers</span> <span class="o">=</span> <span class="n">bin_centers</span><span class="p">[</span><span class="n">peak_idx</span><span class="p">]</span>
+        <span class="c1"># Refine each center as a weighted mean of nearby ρ values</span>
+        <span class="n">peak_centers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+            <span class="n">rho</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">rho</span> <span class="o">-</span> <span class="n">c</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">bin_width</span> <span class="o">*</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">raw_centers</span>
+        <span class="p">])</span>
+        <span class="n">all_peak_centers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">peak_centers</span><span class="p">)</span>
+
+    <span class="c1"># For each point, find the minimum distance to a trackline center per angle</span>
+    <span class="n">min_dists</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">n_points</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta_degs</span><span class="p">)),</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="p">(</span><span class="n">rho</span><span class="p">,</span> <span class="n">centers</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">all_rho</span><span class="p">,</span> <span class="n">all_peak_centers</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">centers</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">min_dists</span><span class="p">[:,</span> <span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">rho</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">centers</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">best_k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">min_dists</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">best_dist</span> <span class="o">=</span> <span class="n">min_dists</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_points</span><span class="p">),</span> <span class="n">best_k</span><span class="p">]</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">best_dist</span> <span class="o">&lt;=</span> <span class="n">tol</span><span class="p">,</span> <span class="n">best_k</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">labels</span><span class="p">,</span> <span class="n">all_peak_centers</span></div>
+
+
+
+<div class="viewcode-block" id="label_points_by_probabilistic_line">
+<a class="viewcode-back" href="../../../nbs_uncles.orientation.html#nbs_uncles.orientation.orientation_via_Probabilistic.label_points_by_probabilistic_line">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">label_points_by_probabilistic_line</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span>
+                                      <span class="n">theta_degs</span><span class="p">,</span>
+                                      <span class="n">bin_width</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+                                      <span class="n">tol</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+                                      <span class="n">num_neighbors</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+                                      <span class="n">chain_length</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+                                      <span class="n">n_times</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Assign each point a local angle orientation using probabilistic line fitting.</span>
+
+<span class="sd">    Runs a multi-vote ensemble: the core algorithm is repeated until every</span>
+<span class="sd">    point has been visited at least ``n_times``, and the final label is the</span>
+<span class="sd">    angle family that received the most votes (mode).  Points that are always</span>
+<span class="sd">    near a trackline boundary get their correct family reinforced across</span>
+<span class="sd">    independent random probes, suppressing one-off mislabels.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x, y : array-like</span>
+<span class="sd">        Column and row coordinates of foreground pixels.</span>
+<span class="sd">    theta_degs : array-like</span>
+<span class="sd">        Image-convention dominant angles in degrees (as returned by</span>
+<span class="sd">        ``compute_local_orientation_via_radon`` after the −90° correction).</span>
+<span class="sd">    bin_width : float</span>
+<span class="sd">        Maximum perpendicular distance (pixels) from the fitted line for a</span>
+<span class="sd">        point to be considered part of that line segment. Default is 1.0.</span>
+<span class="sd">    tol : float</span>
+<span class="sd">        Maximum angular difference (degrees) between the PCA-computed angle</span>
+<span class="sd">        and the nearest entry in ``theta_degs`` for the snap to be accepted.</span>
+<span class="sd">        Probes that cannot be snapped cast no vote. Default is 5.</span>
+<span class="sd">    num_neighbors : int</span>
+<span class="sd">        Number of nearest neighbours queried at each chain-extension step.</span>
+<span class="sd">        Higher values reduce the chance of getting stuck. Default is 20.</span>
+<span class="sd">    chain_length : int</span>
+<span class="sd">        Maximum number of points in each local chain used for PCA. Default 10.</span>
+<span class="sd">    n_times : int</span>
+<span class="sd">        Minimum number of votes each point must accumulate before the loop</span>
+<span class="sd">        terminates. Higher values reduce mislabels at the cost of runtime.</span>
+<span class="sd">        Default is 3.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    labels : np.ndarray of int</span>
+<span class="sd">        Per-point index into ``theta_degs`` (i.e. the winning angle family),</span>
+<span class="sd">        or −1 if the point received no valid votes.</span>
+<span class="sd">    all_peak_centers : list</span>
+<span class="sd">        Empty list; returned for API symmetry with ``label_points_by_angle``.</span>
+<span class="sd">        This method does not compute ρ-space trackline centers.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Steps (per iteration):</span>
+
+<span class="sd">    1. Randomly select an under-labeled point from the foreground.</span>
+<span class="sd">    2. Greedily chain ``chain_length`` nearest neighbours to build a local</span>
+<span class="sd">       linear probe.</span>
+<span class="sd">    3. Compute the mean inter-point distance along the chain.</span>
+<span class="sd">    4. Fit PCA to the chain; extract the dominant direction as an angle.</span>
+<span class="sd">    4a. Snap the angle to the closest entry in ``theta_degs`` (within ``tol``);</span>
+<span class="sd">        discard the probe (no vote) if no entry is close enough.</span>
+<span class="sd">    5. Find all foreground points within ``bin_width`` pixels perpendicular</span>
+<span class="sd">       to the snapped line through the starting point.</span>
+<span class="sd">    6. Flood-fill a connected segment from the starting point through the</span>
+<span class="sd">       near-line set, using ``2 × mean_dist`` as the adjacency radius.</span>
+<span class="sd">    7. Cast one vote for the snapped angle family on every under-labeled</span>
+<span class="sd">       point in the connected segment.</span>
+<span class="sd">    8. Repeat until every point has been visited ``n_times``.</span>
+<span class="sd">    9. Resolve each point's label as ``argmax`` of its vote histogram.</span>
+<span class="sd">    """</span>
+    <span class="n">theta_degs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta_degs</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">n_points</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">n_angles</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta_degs</span><span class="p">)</span>
+
+    <span class="c1"># (col, row) ordering gives angle 0° = horizontal, 90° = vertical,</span>
+    <span class="c1"># matching the convention used by orientation_via_PCA and orientation_via_radon.</span>
+    <span class="n">pts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">])</span>
+    <span class="n">tree</span> <span class="o">=</span> <span class="n">KDTree</span><span class="p">(</span><span class="n">pts</span><span class="p">)</span>
+
+    <span class="c1"># label_votes[i, k] = number of times point i was assigned to angle family k</span>
+    <span class="n">label_votes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_points</span><span class="p">,</span> <span class="n">n_angles</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="c1"># label_counts[i] = total labeling attempts on point i (votes + no-snap misses)</span>
+    <span class="n">label_counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_points</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+
+    <span class="n">pca</span> <span class="o">=</span> <span class="n">PCA</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="n">n_points</span> <span class="o">*</span> <span class="n">n_times</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"Probabilistic line labeling"</span><span class="p">)</span> <span class="k">as</span> <span class="n">pbar</span><span class="p">:</span>
+        <span class="n">prev_total</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">label_counts</span> <span class="o">&gt;=</span> <span class="n">n_times</span><span class="p">):</span>
+            <span class="c1"># Step 1: randomly pick a point that still needs more votes</span>
+            <span class="n">under_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">label_counts</span> <span class="o">&lt;</span> <span class="n">n_times</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">start_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">under_idx</span><span class="p">))</span>
+
+            <span class="c1"># Steps 2-3: bidirectional chain — grow half forward, half backward</span>
+            <span class="c1"># so start_idx stays near the middle and the PCA line passes through it.</span>
+            <span class="n">chain</span> <span class="o">=</span> <span class="n">deque</span><span class="p">([</span><span class="n">start_idx</span><span class="p">])</span>
+            <span class="n">visited</span> <span class="o">=</span> <span class="p">{</span><span class="n">start_idx</span><span class="p">}</span>
+            <span class="n">half</span> <span class="o">=</span> <span class="p">(</span><span class="n">chain_length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+
+            <span class="c1"># Forward leg: extend from the front end</span>
+            <span class="n">front</span> <span class="o">=</span> <span class="n">start_idx</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">half</span><span class="p">):</span>
+                <span class="n">_</span><span class="p">,</span> <span class="n">indices</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">pts</span><span class="p">[</span><span class="n">front</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">k</span><span class="o">=</span><span class="n">num_neighbors</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">found</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">for</span> <span class="n">ni</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="n">ni</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">visited</span><span class="p">:</span>
+                        <span class="n">chain</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ni</span><span class="p">)</span>
+                        <span class="n">visited</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ni</span><span class="p">)</span>
+                        <span class="n">front</span> <span class="o">=</span> <span class="n">ni</span>
+                        <span class="n">found</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="k">break</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">found</span><span class="p">:</span>
+                    <span class="k">break</span>
+
+            <span class="c1"># Backward leg: extend from the back end (opposite side of start_idx)</span>
+            <span class="c1"># visited already contains the forward points, so the nearest unvisited</span>
+            <span class="c1"># neighbour of start_idx naturally reaches the other direction.</span>
+            <span class="n">back</span> <span class="o">=</span> <span class="n">start_idx</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">chain_length</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">half</span><span class="p">):</span>
+                <span class="n">_</span><span class="p">,</span> <span class="n">indices</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">pts</span><span class="p">[</span><span class="n">back</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">k</span><span class="o">=</span><span class="n">num_neighbors</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">found</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">for</span> <span class="n">ni</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="n">ni</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">visited</span><span class="p">:</span>
+                        <span class="n">chain</span><span class="o">.</span><span class="n">appendleft</span><span class="p">(</span><span class="n">ni</span><span class="p">)</span>
+                        <span class="n">visited</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ni</span><span class="p">)</span>
+                        <span class="n">back</span> <span class="o">=</span> <span class="n">ni</span>
+                        <span class="n">found</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="k">break</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">found</span><span class="p">:</span>
+                    <span class="k">break</span>
+
+            <span class="n">chain_pts</span> <span class="o">=</span> <span class="n">pts</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">chain</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">chain</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">label_counts</span><span class="p">[</span><span class="n">start_idx</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">label_counts</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">-</span> <span class="n">prev_total</span><span class="p">)</span>
+                <span class="n">prev_total</span> <span class="o">=</span> <span class="n">label_counts</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+                <span class="k">continue</span>
+
+            <span class="n">mean_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">chain_pts</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+
+            <span class="c1"># Step 4: PCA dominant direction → angle</span>
+            <span class="n">pca</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">chain_pts</span><span class="p">)</span>
+            <span class="n">direction</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">components_</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="c1"># arctan2(row_component, col_component): 0°=horizontal, 90°=vertical</span>
+            <span class="n">angle_deg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">direction</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">direction</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">%</span> <span class="mi">180</span>
+
+            <span class="c1"># Step 4a: snap to the nearest Radon-detected angle within tol</span>
+            <span class="n">diffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(((</span><span class="n">theta_degs</span> <span class="o">-</span> <span class="n">angle_deg</span> <span class="o">+</span> <span class="mi">90</span><span class="p">)</span> <span class="o">%</span> <span class="mi">180</span><span class="p">)</span> <span class="o">-</span> <span class="mi">90</span><span class="p">)</span>
+            <span class="n">best</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">diffs</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">diffs</span><span class="p">[</span><span class="n">best</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">tol</span><span class="p">:</span>
+                <span class="c1"># No valid family — count the attempt so this point can still</span>
+                <span class="c1"># reach n_times and won't block loop termination</span>
+                <span class="n">label_counts</span><span class="p">[</span><span class="n">start_idx</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">label_counts</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">-</span> <span class="n">prev_total</span><span class="p">)</span>
+                <span class="n">prev_total</span> <span class="o">=</span> <span class="n">label_counts</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+                <span class="k">continue</span>
+
+            <span class="n">snapped_angle</span> <span class="o">=</span> <span class="n">theta_degs</span><span class="p">[</span><span class="n">best</span><span class="p">]</span>
+
+            <span class="c1"># Step 5: points within bin_width perpendicular to the snapped line</span>
+            <span class="n">angle_rad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">snapped_angle</span><span class="p">)</span>
+            <span class="n">normal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle_rad</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle_rad</span><span class="p">)])</span>
+            <span class="n">perp_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">((</span><span class="n">pts</span> <span class="o">-</span> <span class="n">pts</span><span class="p">[</span><span class="n">start_idx</span><span class="p">])</span> <span class="o">@</span> <span class="n">normal</span><span class="p">)</span>
+            <span class="c1"># near_idx = np.where(perp_dist &lt;= bin_width)[0]  # sorted; start_idx always present</span>
+            <span class="n">near_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">perp_dist</span> <span class="o">&lt;=</span> <span class="n">mean_dist</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="c1"># Step 6: BFS connected segment — 2×mean_dist adjacency radius</span>
+            <span class="n">near_pts</span> <span class="o">=</span> <span class="n">pts</span><span class="p">[</span><span class="n">near_idx</span><span class="p">]</span>
+            <span class="n">sub_tree</span> <span class="o">=</span> <span class="n">KDTree</span><span class="p">(</span><span class="n">near_pts</span><span class="p">)</span>
+            <span class="n">start_local</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">near_idx</span><span class="p">,</span> <span class="n">start_idx</span><span class="p">))</span>
+            <span class="n">step_radius</span> <span class="o">=</span> <span class="n">mean_dist</span> <span class="o">*</span> <span class="mf">2.0</span>
+
+            <span class="n">subcluster_local</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            <span class="n">queue</span> <span class="o">=</span> <span class="p">[</span><span class="n">start_local</span><span class="p">]</span>
+            <span class="n">sub_seen</span> <span class="o">=</span> <span class="p">{</span><span class="n">start_local</span><span class="p">}</span>
+            <span class="k">while</span> <span class="n">queue</span><span class="p">:</span>
+                <span class="n">cur</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">subcluster_local</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">cur</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">ni</span> <span class="ow">in</span> <span class="n">sub_tree</span><span class="o">.</span><span class="n">query_ball_point</span><span class="p">(</span><span class="n">near_pts</span><span class="p">[</span><span class="n">cur</span><span class="p">],</span> <span class="n">r</span><span class="o">=</span><span class="n">step_radius</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">ni</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sub_seen</span><span class="p">:</span>
+                        <span class="n">sub_seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ni</span><span class="p">)</span>
+                        <span class="n">queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ni</span><span class="p">)</span>
+
+            <span class="c1"># Steps 7-8: cast one vote on every under-labeled point in the segment</span>
+            <span class="n">subcluster_global</span> <span class="o">=</span> <span class="n">near_idx</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">subcluster_local</span><span class="p">)]</span>
+            <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">subcluster_global</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">label_counts</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">n_times</span><span class="p">:</span>
+                    <span class="n">label_votes</span><span class="p">[</span><span class="n">idx</span><span class="p">,</span> <span class="n">best</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">label_counts</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="n">curr_total</span> <span class="o">=</span> <span class="n">label_counts</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+            <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">curr_total</span> <span class="o">-</span> <span class="n">prev_total</span><span class="p">)</span>
+            <span class="n">prev_total</span> <span class="o">=</span> <span class="n">curr_total</span>
+
+    <span class="c1"># Step 9: resolve each point's label as the winning angle family (mode)</span>
+    <span class="n">total_votes</span> <span class="o">=</span> <span class="n">label_votes</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">total_votes</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">label_votes</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">labels</span><span class="p">,</span> <span class="p">[]</span></div>
+
+
+
+<div class="viewcode-block" id="label_points_by_probabilistic_line2">
+<a class="viewcode-back" href="../../../nbs_uncles.orientation.html#nbs_uncles.orientation.orientation_via_Probabilistic.label_points_by_probabilistic_line2">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">label_points_by_probabilistic_line2</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span>
+                                        <span class="n">theta_degs</span><span class="p">,</span>
+                                        <span class="n">bin_width</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+                                        <span class="n">tol</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+                                        <span class="n">num_neighbors</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+                                        <span class="n">chain_length</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                                        <span class="n">min_tentative</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Two-tier probabilistic line labeling without BFS connectivity.</span>
+
+<span class="sd">    Each randomly selected point receives a **definitive** label from its</span>
+<span class="sd">    local PCA angle (snapped to a Radon-detected family).  Every point that</span>
+<span class="sd">    lies within ``bin_width`` pixels of that line receives one **tentative**</span>
+<span class="sd">    vote for the same family.  The loop runs until every point has either</span>
+<span class="sd">    been selected once or accumulated at least ``min_tentative`` tentative</span>
+<span class="sd">    votes, whichever comes first.  Final labels are the definitive label for</span>
+<span class="sd">    selected points and the majority-vote angle for the rest.</span>
+
+<span class="sd">    Compared to ``label_points_by_probabilistic_line``, this variant:</span>
+
+<span class="sd">    * Removes the BFS connected-component step — near-line membership is a</span>
+<span class="sd">      pure perpendicular-distance test, vectorised over all points.</span>
+<span class="sd">    * Separates definitive (strong) from tentative (weak) evidence, so a</span>
+<span class="sd">      point selected as a start always gets the label its own chain implies,</span>
+<span class="sd">      while boundary points accumulate evidence from many passing probes.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x, y : array-like</span>
+<span class="sd">        Column and row coordinates of foreground pixels.</span>
+<span class="sd">    theta_degs : array-like</span>
+<span class="sd">        Image-convention dominant angles in degrees (Radon-detected).</span>
+<span class="sd">    bin_width : float</span>
+<span class="sd">        Maximum perpendicular distance (pixels) for a point to receive a</span>
+<span class="sd">        tentative vote from a passing line. Default is 1.0.</span>
+<span class="sd">    tol : float</span>
+<span class="sd">        Maximum angular difference (degrees) between the PCA angle and the</span>
+<span class="sd">        nearest ``theta_degs`` entry for the snap to be accepted. Default 5.</span>
+<span class="sd">    num_neighbors : int</span>
+<span class="sd">        Nearest-neighbour count for each chain-extension query. Default 20.</span>
+<span class="sd">    chain_length : int</span>
+<span class="sd">        Maximum chain length for PCA; ``start_idx`` sits near the middle</span>
+<span class="sd">        via bidirectional growth. Default 10.</span>
+<span class="sd">    min_tentative : int</span>
+<span class="sd">        Minimum tentative votes a non-selected point must receive before it</span>
+<span class="sd">        is considered sufficiently labeled. Default 5.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    labels : np.ndarray of int</span>
+<span class="sd">        Per-point index into ``theta_degs``, or −1 if unresolved.</span>
+<span class="sd">    all_peak_centers : list</span>
+<span class="sd">        Empty list; for API symmetry with ``label_points_by_angle``.</span>
+<span class="sd">    """</span>
+    <span class="n">theta_degs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta_degs</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">n_points</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">n_angles</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta_degs</span><span class="p">)</span>
+
+    <span class="n">pts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">])</span>
+    <span class="n">tree</span> <span class="o">=</span> <span class="n">KDTree</span><span class="p">(</span><span class="n">pts</span><span class="p">)</span>
+
+    <span class="n">selected</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_points</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="n">definitive_labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_points</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">tentative_votes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_points</span><span class="p">,</span> <span class="n">n_angles</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">tentative_counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_points</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+
+    <span class="n">pca</span> <span class="o">=</span> <span class="n">PCA</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="n">n_points</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"Probabilistic line labeling v2"</span><span class="p">)</span> <span class="k">as</span> <span class="n">pbar</span><span class="p">:</span>
+        <span class="n">prev_satisfied</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="c1"># Candidates: unselected points that still need more tentative votes.</span>
+            <span class="c1"># When this pool is empty every point is either selected or has</span>
+            <span class="c1"># enough votes — the termination condition is met.</span>
+            <span class="n">candidates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">~</span><span class="n">selected</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">tentative_counts</span> <span class="o">&lt;</span> <span class="n">min_tentative</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">break</span>
+
+            <span class="n">start_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">candidates</span><span class="p">))</span>
+
+            <span class="c1"># Bidirectional chain so start_idx sits near the middle</span>
+            <span class="n">chain</span> <span class="o">=</span> <span class="n">deque</span><span class="p">([</span><span class="n">start_idx</span><span class="p">])</span>
+            <span class="n">visited</span> <span class="o">=</span> <span class="p">{</span><span class="n">start_idx</span><span class="p">}</span>
+            <span class="n">half</span> <span class="o">=</span> <span class="p">(</span><span class="n">chain_length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+
+            <span class="n">front</span> <span class="o">=</span> <span class="n">start_idx</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">half</span><span class="p">):</span>
+                <span class="n">_</span><span class="p">,</span> <span class="n">indices</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">pts</span><span class="p">[</span><span class="n">front</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">k</span><span class="o">=</span><span class="n">num_neighbors</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">found</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">for</span> <span class="n">ni</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="n">ni</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">visited</span><span class="p">:</span>
+                        <span class="n">chain</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ni</span><span class="p">)</span>
+                        <span class="n">visited</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ni</span><span class="p">)</span>
+                        <span class="n">front</span> <span class="o">=</span> <span class="n">ni</span>
+                        <span class="n">found</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="k">break</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">found</span><span class="p">:</span>
+                    <span class="k">break</span>
+
+            <span class="n">back</span> <span class="o">=</span> <span class="n">start_idx</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">chain_length</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">half</span><span class="p">):</span>
+                <span class="n">_</span><span class="p">,</span> <span class="n">indices</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">pts</span><span class="p">[</span><span class="n">back</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">k</span><span class="o">=</span><span class="n">num_neighbors</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">found</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">for</span> <span class="n">ni</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="n">ni</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">visited</span><span class="p">:</span>
+                        <span class="n">chain</span><span class="o">.</span><span class="n">appendleft</span><span class="p">(</span><span class="n">ni</span><span class="p">)</span>
+                        <span class="n">visited</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ni</span><span class="p">)</span>
+                        <span class="n">back</span> <span class="o">=</span> <span class="n">ni</span>
+                        <span class="n">found</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="k">break</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">found</span><span class="p">:</span>
+                    <span class="k">break</span>
+
+            <span class="c1"># Mark as selected regardless of snap outcome</span>
+            <span class="n">selected</span><span class="p">[</span><span class="n">start_idx</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">chain_pts</span> <span class="o">=</span> <span class="n">pts</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">chain</span><span class="p">)]</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">chain</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">pca</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">chain_pts</span><span class="p">)</span>
+                <span class="n">direction</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">components_</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">angle_deg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">direction</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">direction</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">%</span> <span class="mi">180</span>
+
+                <span class="n">diffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(((</span><span class="n">theta_degs</span> <span class="o">-</span> <span class="n">angle_deg</span> <span class="o">+</span> <span class="mi">90</span><span class="p">)</span> <span class="o">%</span> <span class="mi">180</span><span class="p">)</span> <span class="o">-</span> <span class="mi">90</span><span class="p">)</span>
+                <span class="n">best</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">diffs</span><span class="p">))</span>
+
+                <span class="k">if</span> <span class="n">diffs</span><span class="p">[</span><span class="n">best</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">tol</span><span class="p">:</span>
+                    <span class="n">definitive_labels</span><span class="p">[</span><span class="n">start_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">best</span>
+                    <span class="n">snapped_angle</span> <span class="o">=</span> <span class="n">theta_degs</span><span class="p">[</span><span class="n">best</span><span class="p">]</span>
+
+                    <span class="c1"># Perpendicular-distance filter — vectorised, no BFS</span>
+                    <span class="n">angle_rad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">snapped_angle</span><span class="p">)</span>
+                    <span class="n">normal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle_rad</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle_rad</span><span class="p">)])</span>
+                    <span class="n">perp_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">((</span><span class="n">pts</span> <span class="o">-</span> <span class="n">pts</span><span class="p">[</span><span class="n">start_idx</span><span class="p">])</span> <span class="o">@</span> <span class="n">normal</span><span class="p">)</span>
+                    <span class="n">near_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">perp_dist</span> <span class="o">&lt;=</span> <span class="n">bin_width</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+                    <span class="c1"># Cast one tentative vote on every near-line point</span>
+                    <span class="n">tentative_votes</span><span class="p">[</span><span class="n">near_idx</span><span class="p">,</span> <span class="n">best</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">tentative_counts</span><span class="p">[</span><span class="n">near_idx</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="n">curr_satisfied</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">selected</span> <span class="o">|</span> <span class="p">(</span><span class="n">tentative_counts</span> <span class="o">&gt;=</span> <span class="n">min_tentative</span><span class="p">)))</span>
+            <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">curr_satisfied</span> <span class="o">-</span> <span class="n">prev_satisfied</span><span class="p">)</span>
+            <span class="n">prev_satisfied</span> <span class="o">=</span> <span class="n">curr_satisfied</span>
+
+    <span class="c1"># Resolve final labels</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_points</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">labels</span><span class="p">[</span><span class="n">selected</span><span class="p">]</span> <span class="o">=</span> <span class="n">definitive_labels</span><span class="p">[</span><span class="n">selected</span><span class="p">]</span>
+    <span class="n">has_votes</span> <span class="o">=</span> <span class="p">(</span><span class="o">~</span><span class="n">selected</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">tentative_counts</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">has_votes</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="n">labels</span><span class="p">[</span><span class="n">has_votes</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">tentative_votes</span><span class="p">[</span><span class="n">has_votes</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">labels</span><span class="p">,</span> <span class="p">[]</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Francis Corpuz, Elias Edideran, Glen Rice.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

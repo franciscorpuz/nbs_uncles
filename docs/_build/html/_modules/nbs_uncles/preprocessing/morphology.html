@@ -1,0 +1,346 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>nbs_uncles.preprocessing.morphology &mdash; nbs_uncles  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            nbs_uncles
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">API Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">nbs_uncles</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">nbs_uncles</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">nbs_uncles.preprocessing.morphology</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for nbs_uncles.preprocessing.morphology</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.decomposition</span><span class="w"> </span><span class="kn">import</span> <span class="n">PCA</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skimage.morphology</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">dilation</span><span class="p">,</span> <span class="n">medial_axis</span><span class="p">,</span> <span class="n">opening</span><span class="p">,</span> <span class="n">footprint_rectangle</span><span class="p">,</span> <span class="n">disk</span><span class="p">,</span>
+    <span class="n">remove_small_objects</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skimage.draw</span><span class="w"> </span><span class="kn">import</span> <span class="n">line</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skimage.transform</span><span class="w"> </span><span class="kn">import</span> <span class="n">rotate</span>
+
+
+<div class="viewcode-block" id="build_coverage_mask">
+<a class="viewcode-back" href="../../../nbs_uncles.preprocessing.html#nbs_uncles.preprocessing.morphology.build_coverage_mask">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_coverage_mask</span><span class="p">(</span><span class="n">bathy_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build a binary coverage mask from a bathymetric raster dataset.</span>
+
+<span class="sd">    Marks every pixel as ``True`` where valid depth data exists and ``False``</span>
+<span class="sd">    where the no-data value (NDV) was recorded.  The mask captures *where*</span>
+<span class="sd">    the sonar detected the seafloor, independent of the actual depth values.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    bathy_data : dict</span>
+<span class="sd">        Raster dictionary as returned by :func:`read_file`, with keys</span>
+<span class="sd">        ``'data'`` (2-D depth array) and ``'metadata'`` (containing</span>
+<span class="sd">        ``'ndv_value'``).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray of bool</span>
+<span class="sd">        Binary array of the same shape as ``bathy_data['data']``.</span>
+<span class="sd">        ``True`` where depth values are valid; ``False`` where no-data.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Both NaN-encoded and sentinel-value NDV formats are supported:</span>
+
+<span class="sd">    - If ``ndv_value`` is ``None`` or ``NaN``, the mask is ``~np.isnan(data)``.</span>
+<span class="sd">    - Otherwise the mask is ``data != ndv_value``.</span>
+<span class="sd">    """</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">bathy_data</span><span class="p">[</span><span class="s1">'data'</span><span class="p">]</span>
+    <span class="n">ndv</span>  <span class="o">=</span> <span class="n">bathy_data</span><span class="p">[</span><span class="s1">'metadata'</span><span class="p">][</span><span class="s1">'ndv_value'</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">ndv</span><span class="p">):</span>
+        <span class="k">return</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">data</span> <span class="o">!=</span> <span class="n">ndv</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="filter_blobs_keep_lines">
+<a class="viewcode-back" href="../../../nbs_uncles.preprocessing.html#nbs_uncles.preprocessing.morphology.filter_blobs_keep_lines">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">filter_blobs_keep_lines</span><span class="p">(</span>
+    <span class="n">binary_image</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">line_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
+    <span class="n">n_angles</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">18</span><span class="p">,</span>
+    <span class="n">restore_radius</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Remove blobs from a binary image while preserving lines at their original thickness.</span>
+
+<span class="sd">    Uses directional morphological opening across ``n_angles`` orientations.</span>
+<span class="sd">    Pixels that survive at least one opening (i.e., lie on a sufficiently long</span>
+<span class="sd">    linear structure) are kept. An optional dilation step recovers the original</span>
+<span class="sd">    line width after thinning by the opening.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    binary_image : np.ndarray</span>
+<span class="sd">        Input binary image (bool or 0/255 uint8).</span>
+<span class="sd">    line_length : int, optional</span>
+<span class="sd">        Length of the line structuring element in pixels. Default is 50.</span>
+<span class="sd">    n_angles : int, optional</span>
+<span class="sd">        Number of rotation angles evenly spaced over 180°. Default is 18.</span>
+<span class="sd">    restore_radius : int, optional</span>
+<span class="sd">        Dilation radius for recovering original line thickness after opening.</span>
+<span class="sd">        Set to roughly half the expected line width. Default is 0 (no dilation).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray of bool</span>
+<span class="sd">        Filtered image with blobs removed, lines at original thickness.</span>
+<span class="sd">    """</span>
+    <span class="k">assert</span> <span class="n">restore_radius</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"restore_radius must be a non-negative integer"</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">binary_image</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
+    <span class="n">line_cores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+    <span class="n">half</span> <span class="o">=</span> <span class="n">line_length</span> <span class="o">//</span> <span class="mi">2</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n_angles</span><span class="p">)):</span>
+        <span class="n">angle</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">i</span> <span class="o">/</span> <span class="n">n_angles</span>
+        <span class="n">dx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">half</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle</span><span class="p">)))</span>
+        <span class="n">dy</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">half</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle</span><span class="p">)))</span>
+
+        <span class="n">size</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">half</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">center</span> <span class="o">=</span> <span class="n">half</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+        <span class="n">rr</span><span class="p">,</span> <span class="n">cc</span> <span class="o">=</span> <span class="n">line</span><span class="p">(</span>
+            <span class="n">center</span> <span class="o">-</span> <span class="n">dy</span><span class="p">,</span> <span class="n">center</span> <span class="o">-</span> <span class="n">dx</span><span class="p">,</span>
+            <span class="n">center</span> <span class="o">+</span> <span class="n">dy</span><span class="p">,</span> <span class="n">center</span> <span class="o">+</span> <span class="n">dx</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">kernel</span><span class="p">[</span><span class="n">rr</span><span class="p">,</span> <span class="n">cc</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="n">opened</span> <span class="o">=</span> <span class="n">opening</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">footprint</span><span class="o">=</span><span class="n">kernel</span><span class="p">)</span>
+        <span class="n">line_cores</span> <span class="o">=</span> <span class="n">line_cores</span> <span class="o">|</span> <span class="n">opened</span>
+
+    <span class="c1"># Dilate line cores to recover original line width, then AND with the</span>
+    <span class="c1"># original image so no new pixels are introduced</span>
+    <span class="k">if</span> <span class="n">restore_radius</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">recovery_mask</span> <span class="o">=</span> <span class="n">dilation</span><span class="p">(</span><span class="n">line_cores</span><span class="p">,</span> <span class="n">footprint</span><span class="o">=</span><span class="n">disk</span><span class="p">(</span><span class="n">restore_radius</span><span class="p">))</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">img</span> <span class="o">&amp;</span> <span class="n">recovery_mask</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">line_cores</span>
+
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+
+<div class="viewcode-block" id="filter_squares_keep_lines">
+<a class="viewcode-back" href="../../../nbs_uncles.preprocessing.html#nbs_uncles.preprocessing.morphology.filter_squares_keep_lines">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">filter_squares_keep_lines</span><span class="p">(</span>
+    <span class="n">binary_image</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">square_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
+    <span class="n">angle_rotation</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Remove square-shaped blobs from a binary image while preserving lines.</span>
+
+<span class="sd">    Applies a square morphological opening to identify blob-like patches that</span>
+<span class="sd">    are at least ``square_size`` pixels wide in all directions. Lines are too</span>
+<span class="sd">    thin to survive the opening and are therefore preserved.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    binary_image : np.ndarray</span>
+<span class="sd">        Input binary image (bool or 0/255 uint8).</span>
+<span class="sd">    square_size : int, optional</span>
+<span class="sd">        Side length of the square structuring element in pixels. Default is 50.</span>
+<span class="sd">    angle_rotation : float, optional</span>
+<span class="sd">        Angle in degrees to rotate the structuring element. Useful when the</span>
+<span class="sd">        dominant blob orientation is not axis-aligned. Default is 0.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray of bool</span>
+<span class="sd">        Filtered image with square blobs removed, lines preserved.</span>
+<span class="sd">    """</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">binary_image</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
+    <span class="n">footprint</span> <span class="o">=</span> <span class="n">footprint_rectangle</span><span class="p">((</span><span class="n">square_size</span><span class="p">,</span> <span class="n">square_size</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">angle_rotation</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">footprint</span> <span class="o">=</span> <span class="n">rotate</span><span class="p">(</span><span class="n">footprint</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="n">angle_rotation</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.5</span>
+
+    <span class="c1"># Pixels that survive the square opening are blob-like; subtract them</span>
+    <span class="n">squares_filtered</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">opening</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">footprint</span><span class="o">=</span><span class="n">footprint</span><span class="p">))</span> <span class="o">&amp;</span> <span class="n">img</span>
+
+    <span class="k">return</span> <span class="n">squares_filtered</span></div>
+
+
+
+<div class="viewcode-block" id="filter_morphological_operations">
+<a class="viewcode-back" href="../../../nbs_uncles.preprocessing.html#nbs_uncles.preprocessing.morphology.filter_morphological_operations">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">filter_morphological_operations</span><span class="p">(</span><span class="n">binary_image</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+                                    <span class="n">square_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
+                                    <span class="n">line_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
+                                    <span class="n">n_angles</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">180</span><span class="p">,</span>
+                                    <span class="n">restore_radius</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+                                    <span class="n">blob_max_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Apply a morphological pipeline to suppress blobs while preserving lines.</span>
+
+<span class="sd">    The pipeline:</span>
+
+<span class="sd">    1. Estimates the dominant orientation of the image via PCA on skeleton pixels.</span>
+<span class="sd">    2. Rotates the image to align the dominant orientation with the x-axis.</span>
+<span class="sd">    3. Applies directional opening (line SE) to suppress non-linear blobs.</span>
+<span class="sd">    4. Applies square opening to remove large square-shaped patches.</span>
+<span class="sd">    5. Removes small residual blobs below ``blob_max_size`` pixels.</span>
+<span class="sd">    6. Rotates the result back to the original orientation.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    binary_image : np.ndarray</span>
+<span class="sd">        Input binary image (bool or 0/255 uint8).</span>
+<span class="sd">    square_size : int, optional</span>
+<span class="sd">        Side length of the square structuring element. Default is 50.</span>
+<span class="sd">    line_length : int, optional</span>
+<span class="sd">        Length of the line structuring element. Default is 50.</span>
+<span class="sd">    n_angles : int, optional</span>
+<span class="sd">        Number of orientations tested by the directional opening. Default is 180.</span>
+<span class="sd">    restore_radius : int, optional</span>
+<span class="sd">        Dilation radius used in :func:`filter_blobs_keep_lines` to recover</span>
+<span class="sd">        original line thickness. Default is 5.</span>
+<span class="sd">    blob_max_size : int, optional</span>
+<span class="sd">        Maximum size (in pixels) of connected components to discard after</span>
+<span class="sd">        filtering. Set to 0 to skip this step. Default is 100.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray of bool</span>
+<span class="sd">        Filtered binary image with blobs suppressed and lines preserved,</span>
+<span class="sd">        in the original orientation.</span>
+<span class="sd">    """</span>
+    <span class="c1"># Use the medial axis to get a thin skeleton for robust PCA orientation estimation</span>
+    <span class="n">y_indices</span><span class="p">,</span> <span class="n">x_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">medial_axis</span><span class="p">(</span><span class="n">binary_image</span><span class="p">))</span>
+    <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">((</span><span class="n">x_indices</span><span class="p">,</span> <span class="n">y_indices</span><span class="p">))</span>
+    <span class="n">pca</span> <span class="o">=</span> <span class="n">PCA</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">pca</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
+    <span class="n">direction</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">components_</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">orig_angle_radians</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">direction</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">direction</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">orig_angle_degrees</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">orig_angle_radians</span><span class="p">)</span> <span class="o">%</span> <span class="mi">180</span>
+
+    <span class="c1"># Rotate the binary image to align the dominant structure with the x-axis</span>
+    <span class="n">rotated_binary</span> <span class="o">=</span> <span class="n">rotate</span><span class="p">(</span><span class="n">binary_image</span><span class="p">,</span> <span class="n">angle</span><span class="o">=-</span><span class="n">orig_angle_degrees</span><span class="p">,</span>
+                            <span class="n">resize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">preserve_range</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+
+    <span class="c1"># Filter with directional line structuring elements to isolate line-like pixels</span>
+    <span class="n">lines_filtered</span> <span class="o">=</span> <span class="n">filter_blobs_keep_lines</span><span class="p">(</span>
+        <span class="n">binary_image</span><span class="o">=</span><span class="n">rotated_binary</span><span class="p">,</span>
+        <span class="n">line_length</span><span class="o">=</span><span class="n">line_length</span><span class="p">,</span>
+        <span class="n">n_angles</span><span class="o">=</span><span class="n">n_angles</span><span class="p">,</span>
+        <span class="n">restore_radius</span><span class="o">=</span><span class="n">restore_radius</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Compute orientation of the rotated image (used as input to the square filter)</span>
+    <span class="n">y_indices</span><span class="p">,</span> <span class="n">x_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">rotated_binary</span><span class="p">)</span>
+    <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">((</span><span class="n">x_indices</span><span class="p">,</span> <span class="n">y_indices</span><span class="p">))</span>
+    <span class="n">pca2</span> <span class="o">=</span> <span class="n">PCA</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">pca2</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
+    <span class="n">direction</span> <span class="o">=</span> <span class="n">pca2</span><span class="o">.</span><span class="n">components_</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">angle_degrees</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">direction</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">direction</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">%</span> <span class="mi">180</span>
+
+    <span class="c1"># Remove large square-shaped patches that survived the directional filter</span>
+    <span class="n">squares_filtered</span> <span class="o">=</span> <span class="n">filter_squares_keep_lines</span><span class="p">(</span>
+        <span class="n">lines_filtered</span><span class="p">,</span> <span class="n">square_size</span><span class="o">=</span><span class="n">square_size</span><span class="p">,</span> <span class="n">angle_rotation</span><span class="o">=</span><span class="n">angle_degrees</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Discard small residual blobs</span>
+    <span class="k">if</span> <span class="n">blob_max_size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">remove_small_objects</span><span class="p">(</span><span class="n">squares_filtered</span><span class="p">,</span> <span class="n">max_size</span><span class="o">=</span><span class="n">blob_max_size</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">squares_filtered</span>
+
+    <span class="c1"># Rotate back to original orientation</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">rotate</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">angle</span><span class="o">=</span><span class="n">orig_angle_degrees</span><span class="p">,</span>
+                    <span class="n">resize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">preserve_range</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">output</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Francis Corpuz, Elias Edideran, Glen Rice.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

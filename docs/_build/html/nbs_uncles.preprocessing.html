@@ -1,0 +1,407 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>nbs_uncles.preprocessing package &mdash; nbs_uncles  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="nbs_uncles.visualization package" href="nbs_uncles.visualization.html" />
+    <link rel="prev" title="nbs_uncles.pipeline package" href="nbs_uncles.pipeline.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            nbs_uncles
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">API Reference:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">nbs_uncles</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="nbs_uncles.html">nbs_uncles package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="nbs_uncles.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="nbs_uncles.io.html">nbs_uncles.io package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="nbs_uncles.methods.html">nbs_uncles.methods package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="nbs_uncles.orientation.html">nbs_uncles.orientation package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="nbs_uncles.pipeline.html">nbs_uncles.pipeline package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">nbs_uncles.preprocessing package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="nbs_uncles.visualization.html">nbs_uncles.visualization package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">nbs_uncles</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">nbs_uncles</a></li>
+          <li class="breadcrumb-item"><a href="nbs_uncles.html">nbs_uncles package</a></li>
+      <li class="breadcrumb-item active">nbs_uncles.preprocessing package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/nbs_uncles.preprocessing.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="nbs-uncles-preprocessing-package">
+<h1>nbs_uncles.preprocessing package<a class="headerlink" href="#nbs-uncles-preprocessing-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-nbs_uncles.preprocessing.geometry">
+<span id="nbs-uncles-preprocessing-geometry-module"></span><h2>nbs_uncles.preprocessing.geometry module<a class="headerlink" href="#module-nbs_uncles.preprocessing.geometry" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="nbs_uncles.preprocessing.geometry.refine_cluster_rotation">
+<span class="sig-prename descclassname"><span class="pre">nbs_uncles.preprocessing.geometry.</span></span><span class="sig-name descname"><span class="pre">refine_cluster_rotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/nbs_uncles/preprocessing/geometry.html#refine_cluster_rotation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nbs_uncles.preprocessing.geometry.refine_cluster_rotation" title="Link to this definition"></a></dt>
+<dd><p>Align a set of points with the x-axis using DBSCAN subclustering and PCA.</p>
+<p>Runs DBSCAN on the xy-plane to find subclusters, fits PCA to the largest
+subclusters to estimate the dominant orientation, then rotates all points
+so that orientation aligns with the x-axis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>points</strong> (<em>np.ndarray</em>) – Array of shape <code class="docutils literal notranslate"><span class="pre">(n_points,</span> <span class="pre">3)</span></code> with columns <code class="docutils literal notranslate"><span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">depth]</span></code>.</p></li>
+<li><p><strong>plot_data</strong> (<em>bool</em><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, plots each retained subcluster. Default is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>refined_cluster</strong> (<em>np.ndarray</em>) – Point array of shape <code class="docutils literal notranslate"><span class="pre">(n_points,</span> <span class="pre">3)</span></code> rotated so the dominant line
+direction is parallel to the x-axis.</p></li>
+<li><p><strong>angle_correction</strong> (<em>float</em>) – Rotation angle in degrees applied to produce <code class="docutils literal notranslate"><span class="pre">refined_cluster</span></code>.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="nbs_uncles.preprocessing.geometry.rotate_points">
+<span class="sig-prename descclassname"><span class="pre">nbs_uncles.preprocessing.geometry.</span></span><span class="sig-name descname"><span class="pre">rotate_points</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">angle</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/nbs_uncles/preprocessing/geometry.html#rotate_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nbs_uncles.preprocessing.geometry.rotate_points" title="Link to this definition"></a></dt>
+<dd><p>Rotate a set of [x, y, depth] points given an angle.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>points</strong> (<em>np.ndarray</em>) – Array of shape <code class="docutils literal notranslate"><span class="pre">(n_points,</span> <span class="pre">3)</span></code> with columns <code class="docutils literal notranslate"><span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">depth]</span></code>.</p></li>
+<li><p><strong>angle</strong> (<em>float</em>) – Rotation angle in degrees (counter-clockwise positive).</p></li>
+<li><p><strong>center</strong> (<em>np.ndarray</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Center of rotation. If None, center of point cloud is used.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>np.ndarray</em> – Rotated point array of the same shape as <code class="docutils literal notranslate"><span class="pre">points</span></code>.</p></li>
+<li><p><em>tuple</em> – center coordinates</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="nbs_uncles.preprocessing.geometry.undo_rotation">
+<span class="sig-prename descclassname"><span class="pre">nbs_uncles.preprocessing.geometry.</span></span><span class="sig-name descname"><span class="pre">undo_rotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raster</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">angle_to_rotate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">original_shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/nbs_uncles/preprocessing/geometry.html#undo_rotation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nbs_uncles.preprocessing.geometry.undo_rotation" title="Link to this definition"></a></dt>
+<dd><p>Rotate a raster back to its original orientation and crop to original size.</p>
+<p>Applies the inverse of the forward rotation used in
+<code class="xref py py-func docutils literal notranslate"><span class="pre">detect_trackline_positions()</span></code>, then crops the padded output canvas
+back to the original raster dimensions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>raster</strong> (<em>np.ndarray</em>) – 2-D array in the <em>rotated</em> frame (e.g. <code class="docutils literal notranslate"><span class="pre">uncertainty_raster</span></code> from
+<code class="xref py py-func docutils literal notranslate"><span class="pre">build_uncertainty_raster()</span></code>).</p></li>
+<li><p><strong>angle_to_rotate</strong> (<em>float</em>) – The <em>forward</em> rotation angle that was applied (<code class="docutils literal notranslate"><span class="pre">90</span> <span class="pre">-</span> <span class="pre">dominant_angle</span></code>),
+as returned by <code class="xref py py-func docutils literal notranslate"><span class="pre">detect_trackline_positions()</span></code>.  This function
+applies <code class="docutils literal notranslate"><span class="pre">-angle_to_rotate</span></code> to undo it.</p></li>
+<li><p><strong>original_shape</strong> (<em>tuple</em><em> of </em><em>int</em>) – <code class="docutils literal notranslate"><span class="pre">(n_rows,</span> <span class="pre">n_cols)</span></code> of the original pre-rotation raster.  Used to
+crop the over-sized canvas back to the correct dimensions.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Array cropped to <code class="docutils literal notranslate"><span class="pre">original_shape</span></code> in the original orientation.
+Pixels in the corners (outside the original data extent) are <code class="docutils literal notranslate"><span class="pre">NaN</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray of float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="nbs_uncles.preprocessing.geometry.update_geotransform">
+<span class="sig-prename descclassname"><span class="pre">nbs_uncles.preprocessing.geometry.</span></span><span class="sig-name descname"><span class="pre">update_geotransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixel_width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixel_height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span></span></span><a class="reference internal" href="_modules/nbs_uncles/preprocessing/geometry.html#update_geotransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nbs_uncles.preprocessing.geometry.update_geotransform" title="Link to this definition"></a></dt>
+<dd><p>Build a new geotransform that fits a rotated point cloud.</p>
+<p>The origin is placed so that the most extreme points sit at
+pixel centres, consistent with <code class="xref py py-func docutils literal notranslate"><span class="pre">raster_to_points()</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>points</strong> (<em>np.ndarray</em>) – Array of shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">3)</span></code> with columns <code class="docutils literal notranslate"><span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">depth]</span></code>.</p></li>
+<li><p><strong>pixel_width</strong> (<em>float</em>) – GT[1] — pixel size in the x direction.</p></li>
+<li><p><strong>pixel_height</strong> (<em>float</em>) – GT[5] — pixel size in the y direction (negative for north-up).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A 6-element GDAL-style geotransform.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="nbs_uncles.preprocessing.geometry.x_distance">
+<span class="sig-prename descclassname"><span class="pre">nbs_uncles.preprocessing.geometry.</span></span><span class="sig-name descname"><span class="pre">x_distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="_modules/nbs_uncles/preprocessing/geometry.html#x_distance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nbs_uncles.preprocessing.geometry.x_distance" title="Link to this definition"></a></dt>
+<dd><p>Compute the absolute x-axis distance between two points.</p>
+<p>Used as a custom DBSCAN metric to cluster points that share a similar
+x-coordinate (i.e., lie on the same across-track survey line after rotation).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p1</strong> (<em>np.ndarray</em>) – First point as <code class="docutils literal notranslate"><span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">...]</span></code>.</p></li>
+<li><p><strong>p2</strong> (<em>np.ndarray</em>) – Second point as <code class="docutils literal notranslate"><span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">...]</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Absolute difference in the x-coordinate.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-nbs_uncles.preprocessing.morphology">
+<span id="nbs-uncles-preprocessing-morphology-module"></span><h2>nbs_uncles.preprocessing.morphology module<a class="headerlink" href="#module-nbs_uncles.preprocessing.morphology" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="nbs_uncles.preprocessing.morphology.build_coverage_mask">
+<span class="sig-prename descclassname"><span class="pre">nbs_uncles.preprocessing.morphology.</span></span><span class="sig-name descname"><span class="pre">build_coverage_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bathy_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/nbs_uncles/preprocessing/morphology.html#build_coverage_mask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nbs_uncles.preprocessing.morphology.build_coverage_mask" title="Link to this definition"></a></dt>
+<dd><p>Build a binary coverage mask from a bathymetric raster dataset.</p>
+<p>Marks every pixel as <code class="docutils literal notranslate"><span class="pre">True</span></code> where valid depth data exists and <code class="docutils literal notranslate"><span class="pre">False</span></code>
+where the no-data value (NDV) was recorded.  The mask captures <em>where</em>
+the sonar detected the seafloor, independent of the actual depth values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>bathy_data</strong> (<em>dict</em>) – Raster dictionary as returned by <code class="xref py py-func docutils literal notranslate"><span class="pre">read_file()</span></code>, with keys
+<code class="docutils literal notranslate"><span class="pre">'data'</span></code> (2-D depth array) and <code class="docutils literal notranslate"><span class="pre">'metadata'</span></code> (containing
+<code class="docutils literal notranslate"><span class="pre">'ndv_value'</span></code>).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Binary array of the same shape as <code class="docutils literal notranslate"><span class="pre">bathy_data['data']</span></code>.
+<code class="docutils literal notranslate"><span class="pre">True</span></code> where depth values are valid; <code class="docutils literal notranslate"><span class="pre">False</span></code> where no-data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray of bool</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Both NaN-encoded and sentinel-value NDV formats are supported:</p>
+<ul class="simple">
+<li><p>If <code class="docutils literal notranslate"><span class="pre">ndv_value</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code> or <code class="docutils literal notranslate"><span class="pre">NaN</span></code>, the mask is <code class="docutils literal notranslate"><span class="pre">~np.isnan(data)</span></code>.</p></li>
+<li><p>Otherwise the mask is <code class="docutils literal notranslate"><span class="pre">data</span> <span class="pre">!=</span> <span class="pre">ndv_value</span></code>.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="nbs_uncles.preprocessing.morphology.filter_blobs_keep_lines">
+<span class="sig-prename descclassname"><span class="pre">nbs_uncles.preprocessing.morphology.</span></span><span class="sig-name descname"><span class="pre">filter_blobs_keep_lines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">binary_image</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_length</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_angles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">18</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">restore_radius</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/nbs_uncles/preprocessing/morphology.html#filter_blobs_keep_lines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nbs_uncles.preprocessing.morphology.filter_blobs_keep_lines" title="Link to this definition"></a></dt>
+<dd><p>Remove blobs from a binary image while preserving lines at their original thickness.</p>
+<p>Uses directional morphological opening across <code class="docutils literal notranslate"><span class="pre">n_angles</span></code> orientations.
+Pixels that survive at least one opening (i.e., lie on a sufficiently long
+linear structure) are kept. An optional dilation step recovers the original
+line width after thinning by the opening.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>binary_image</strong> (<em>np.ndarray</em>) – Input binary image (bool or 0/255 uint8).</p></li>
+<li><p><strong>line_length</strong> (<em>int</em><em>, </em><em>optional</em>) – Length of the line structuring element in pixels. Default is 50.</p></li>
+<li><p><strong>n_angles</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of rotation angles evenly spaced over 180°. Default is 18.</p></li>
+<li><p><strong>restore_radius</strong> (<em>int</em><em>, </em><em>optional</em>) – Dilation radius for recovering original line thickness after opening.
+Set to roughly half the expected line width. Default is 0 (no dilation).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Filtered image with blobs removed, lines at original thickness.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray of bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="nbs_uncles.preprocessing.morphology.filter_morphological_operations">
+<span class="sig-prename descclassname"><span class="pre">nbs_uncles.preprocessing.morphology.</span></span><span class="sig-name descname"><span class="pre">filter_morphological_operations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">binary_image</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">square_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_length</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_angles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">180</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">restore_radius</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blob_max_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/nbs_uncles/preprocessing/morphology.html#filter_morphological_operations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nbs_uncles.preprocessing.morphology.filter_morphological_operations" title="Link to this definition"></a></dt>
+<dd><p>Apply a morphological pipeline to suppress blobs while preserving lines.</p>
+<p>The pipeline:</p>
+<ol class="arabic simple">
+<li><p>Estimates the dominant orientation of the image via PCA on skeleton pixels.</p></li>
+<li><p>Rotates the image to align the dominant orientation with the x-axis.</p></li>
+<li><p>Applies directional opening (line SE) to suppress non-linear blobs.</p></li>
+<li><p>Applies square opening to remove large square-shaped patches.</p></li>
+<li><p>Removes small residual blobs below <code class="docutils literal notranslate"><span class="pre">blob_max_size</span></code> pixels.</p></li>
+<li><p>Rotates the result back to the original orientation.</p></li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>binary_image</strong> (<em>np.ndarray</em>) – Input binary image (bool or 0/255 uint8).</p></li>
+<li><p><strong>square_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Side length of the square structuring element. Default is 50.</p></li>
+<li><p><strong>line_length</strong> (<em>int</em><em>, </em><em>optional</em>) – Length of the line structuring element. Default is 50.</p></li>
+<li><p><strong>n_angles</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of orientations tested by the directional opening. Default is 180.</p></li>
+<li><p><strong>restore_radius</strong> (<em>int</em><em>, </em><em>optional</em>) – Dilation radius used in <a class="reference internal" href="#nbs_uncles.preprocessing.morphology.filter_blobs_keep_lines" title="nbs_uncles.preprocessing.morphology.filter_blobs_keep_lines"><code class="xref py py-func docutils literal notranslate"><span class="pre">filter_blobs_keep_lines()</span></code></a> to recover
+original line thickness. Default is 5.</p></li>
+<li><p><strong>blob_max_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum size (in pixels) of connected components to discard after
+filtering. Set to 0 to skip this step. Default is 100.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Filtered binary image with blobs suppressed and lines preserved,
+in the original orientation.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray of bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="nbs_uncles.preprocessing.morphology.filter_squares_keep_lines">
+<span class="sig-prename descclassname"><span class="pre">nbs_uncles.preprocessing.morphology.</span></span><span class="sig-name descname"><span class="pre">filter_squares_keep_lines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">binary_image</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">square_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">angle_rotation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/nbs_uncles/preprocessing/morphology.html#filter_squares_keep_lines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nbs_uncles.preprocessing.morphology.filter_squares_keep_lines" title="Link to this definition"></a></dt>
+<dd><p>Remove square-shaped blobs from a binary image while preserving lines.</p>
+<p>Applies a square morphological opening to identify blob-like patches that
+are at least <code class="docutils literal notranslate"><span class="pre">square_size</span></code> pixels wide in all directions. Lines are too
+thin to survive the opening and are therefore preserved.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>binary_image</strong> (<em>np.ndarray</em>) – Input binary image (bool or 0/255 uint8).</p></li>
+<li><p><strong>square_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Side length of the square structuring element in pixels. Default is 50.</p></li>
+<li><p><strong>angle_rotation</strong> (<em>float</em><em>, </em><em>optional</em>) – Angle in degrees to rotate the structuring element. Useful when the
+dominant blob orientation is not axis-aligned. Default is 0.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Filtered image with square blobs removed, lines preserved.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray of bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-nbs_uncles.preprocessing.orientation">
+<span id="nbs-uncles-preprocessing-orientation-module"></span><h2>nbs_uncles.preprocessing.orientation module<a class="headerlink" href="#module-nbs_uncles.preprocessing.orientation" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="nbs_uncles.preprocessing.orientation.compute_local_orientation">
+<span class="sig-prename descclassname"><span class="pre">nbs_uncles.preprocessing.orientation.</span></span><span class="sig-name descname"><span class="pre">compute_local_orientation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">binary_image</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'pca'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nbs_uncles/preprocessing/orientation.html#compute_local_orientation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nbs_uncles.preprocessing.orientation.compute_local_orientation" title="Link to this definition"></a></dt>
+<dd><p>Compute local orientation of each point in a binary image.</p>
+<p>Uses various methods (PCA, Radon, Probabilistic) to build a label points
+with their local orientation.  Each foreground pixel carries its local
+orientation in degrees (wrapped to <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">180)</span></code>); background pixels are <code class="docutils literal notranslate"><span class="pre">NaN</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>binary_image</strong> (<em>np.ndarray</em>) – Binary image where <code class="docutils literal notranslate"><span class="pre">True</span></code> values represent points of interest.</p></li>
+<li><p><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) – Method to use for computing local orientation.
+options: {‘pca’, ‘radon’, probabilistic’}. Default is <code class="docutils literal notranslate"><span class="pre">'radon'</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>point_orientations</strong> (<em>dict[int|str, np.ndarray]</em>) – Dictionary mapping a detected angle to a 2D float array of
+the same shape as <code class="docutils literal notranslate"><span class="pre">binary_image</span></code>.  Each foreground pixel carries
+its local orientation in degrees (wrapped to <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">180)</span></code>);
+background pixels are <code class="docutils literal notranslate"><span class="pre">NaN</span></code>.
+dict[‘combined’] contains the combined orientation field from all detected angles.</p></li>
+<li><p><strong>angle_info</strong> (<em>np.ndarray</em>) – generic variable that may contain additional information about the detected angles,
+depending on the method used.
+can be used to bypass recomputation of the orientation field if the same image is
+processed multiple times with the same method.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="nbs_uncles.pipeline.html" class="btn btn-neutral float-left" title="nbs_uncles.pipeline package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="nbs_uncles.visualization.html" class="btn btn-neutral float-right" title="nbs_uncles.visualization package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Francis Corpuz, Elias Edideran, Glen Rice.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

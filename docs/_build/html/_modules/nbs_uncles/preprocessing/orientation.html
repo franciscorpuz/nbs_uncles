@@ -1,0 +1,177 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>nbs_uncles.preprocessing.orientation &mdash; nbs_uncles  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            nbs_uncles
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">API Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">nbs_uncles</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">nbs_uncles</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">nbs_uncles.preprocessing.orientation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for nbs_uncles.preprocessing.orientation</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">nbs_uncles.orientation.orientation_via_PCA</span><span class="w"> </span><span class="kn">import</span> <span class="n">orientation_via_PCA</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">nbs_uncles.orientation.orientation_via_Radon</span><span class="w"> </span><span class="kn">import</span> <span class="n">orientation_via_Radon</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">nbs_uncles.orientation.orientation_via_Probabilistic</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">orientation_via_probabilistic_line</span> <span class="k">as</span> <span class="n">orientation_via_Probabilistic</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+
+<div class="viewcode-block" id="compute_local_orientation">
+<a class="viewcode-back" href="../../../nbs_uncles.preprocessing.html#nbs_uncles.preprocessing.orientation.compute_local_orientation">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_local_orientation</span><span class="p">(</span><span class="n">binary_image</span><span class="p">,</span>
+                              <span class="n">method</span><span class="p">:</span><span class="nb">str</span> <span class="o">=</span><span class="s1">'pca'</span><span class="p">,</span>
+                              <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Compute local orientation of each point in a binary image.</span>
+
+<span class="sd">    Uses various methods (PCA, Radon, Probabilistic) to build a label points</span>
+<span class="sd">    with their local orientation.  Each foreground pixel carries its local</span>
+<span class="sd">    orientation in degrees (wrapped to ``[0, 180)``); background pixels are ``NaN``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    binary_image : np.ndarray</span>
+<span class="sd">        Binary image where ``True`` values represent points of interest.</span>
+<span class="sd">    method : str, optional</span>
+<span class="sd">        Method to use for computing local orientation.</span>
+<span class="sd">        options: {'pca', 'radon', probabilistic'}. Default is ``'radon'``.</span>
+
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    point_orientations : dict[int|str, np.ndarray]</span>
+<span class="sd">        Dictionary mapping a detected angle to a 2D float array of</span>
+<span class="sd">        the same shape as ``binary_image``.  Each foreground pixel carries</span>
+<span class="sd">        its local orientation in degrees (wrapped to ``[0, 180)``);</span>
+<span class="sd">        background pixels are ``NaN``.</span>
+<span class="sd">        dict['combined'] contains the combined orientation field from all detected angles.</span>
+<span class="sd">    angle_info : np.ndarray</span>
+<span class="sd">        generic variable that may contain additional information about the detected angles,</span>
+<span class="sd">        depending on the method used.</span>
+<span class="sd">        can be used to bypass recomputation of the orientation field if the same image is</span>
+<span class="sd">        processed multiple times with the same method.</span>
+<span class="sd">    """</span>
+
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">'pca'</span><span class="p">:</span>
+        <span class="n">point_orientations</span><span class="p">,</span> <span class="n">angle_info</span> <span class="o">=</span> <span class="n">orientation_via_PCA</span><span class="p">(</span><span class="n">binary_image</span><span class="p">,</span>
+                                            <span class="n">line_length</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'line_length'</span><span class="p">,</span> <span class="mi">20</span><span class="p">),</span>
+                                            <span class="n">num_neighbors</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'num_neighbors'</span><span class="p">,</span> <span class="mi">50</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">'radon'</span><span class="p">:</span>
+        <span class="n">point_orientations</span><span class="p">,</span> <span class="n">angle_info</span> <span class="o">=</span> <span class="n">orientation_via_Radon</span><span class="p">(</span><span class="n">binary_image</span><span class="p">,</span>
+                                                             <span class="n">angle_info</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'angle_info'</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                                                             <span class="n">angular_tolerance</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'angular_tolerance'</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+                                                             <span class="n">width_tolerance</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'width_tolerance'</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+                                                             <span class="n">min_intensity</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'min_intensity'</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">),</span>
+                                                             <span class="n">do_offset</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'do_offset'</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+                                                             <span class="n">top_angles</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'top_angles'</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                                                             <span class="n">zoom_factor</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'zoom_factor'</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">'probabilistic'</span><span class="p">:</span>
+        <span class="n">point_orientations</span><span class="p">,</span> <span class="n">angle_info</span> <span class="o">=</span> <span class="n">orientation_via_Probabilistic</span><span class="p">(</span><span class="n">binary_image</span><span class="p">,</span>
+                                                                       <span class="n">test_angles</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'test_angles'</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                                                                       <span class="n">circle</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'circle'</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+                                                                       <span class="n">tol</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'tol'</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+                                                                       <span class="n">precomputed_theta</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'precomputed_theta'</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Invalid method: </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">. Must be one of the following: 'pca', 'radon', 'probabilistic'."</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">point_orientations</span><span class="p">,</span> <span class="n">angle_info</span></div>
+
+
+
+
+
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Francis Corpuz, Elias Edideran, Glen Rice.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,195 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>nbs_uncles.orientation.orientation_via_PCA &mdash; nbs_uncles  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            nbs_uncles
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">API Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">nbs_uncles</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">nbs_uncles</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">nbs_uncles.orientation.orientation_via_PCA</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for nbs_uncles.orientation.orientation_via_PCA</h1><div class="highlight"><pre>
+<span></span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.decomposition</span><span class="w"> </span><span class="kn">import</span> <span class="n">PCA</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.spatial</span><span class="w"> </span><span class="kn">import</span> <span class="n">KDTree</span>
+
+<span class="c1">### WARNING: Needs extensive refactoring and testing</span>
+<span class="c1">### Use orientation_via_Radon for the meantime</span>
+
+<div class="viewcode-block" id="orientation_via_PCA">
+<a class="viewcode-back" href="../../../nbs_uncles.orientation.html#nbs_uncles.orientation.orientation_via_PCA.orientation_via_PCA">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">orientation_via_PCA</span><span class="p">(</span><span class="n">binary_image</span><span class="p">,</span>
+                              <span class="n">line_length</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+                              <span class="n">num_neighbors</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Compute local orientation via PCA for each point in a binary image.</span>
+
+<span class="sd">    Uses a chaining method to build a local neighbourhood for each point:</span>
+<span class="sd">    starting from each point, greedily extends a chain of nearby unvisited</span>
+<span class="sd">    neighbours and fits PCA to determine the dominant local direction.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    binary_image : np.ndarray</span>
+<span class="sd">        Binary image where ``True`` values represent points of interest.</span>
+<span class="sd">    line_length : int, optional</span>
+<span class="sd">        Number of points to include in each local chain/subgroup. Default is 20.</span>
+<span class="sd">        More number leads to more accurate results, but also increases the</span>
+<span class="sd">        processing time.</span>
+<span class="sd">        Less number decreases processing time but makes the estimation vulnerable</span>
+<span class="sd">        to errors cause by non-linearly oriented features.</span>
+<span class="sd">    num_neighbors : int, optional</span>
+<span class="sd">        Number of nearest neighbours to query when extending/creating the local chain.</span>
+<span class="sd">        Higher values reduce the chance of getting stuck. Default is 50..</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    point_orientations : np.ndarray</span>
+<span class="sd">        2-D float array of the same shape as ``binary_image``.  Each</span>
+<span class="sd">        foreground pixel carries its local orientation in degrees (wrapped</span>
+<span class="sd">        to ``[0, 180)``); background pixels are ``NaN``.</span>
+<span class="sd">    angle_profile : np.ndarray</span>
+<span class="sd">        histogram of the angle scores detected by 'pca'</span>
+<span class="sd">    """</span>
+
+    <span class="n">X_linear</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">binary_image</span><span class="p">)</span>  <span class="c1"># Extract coordinates of True values</span>
+
+    <span class="c1"># 1. Create a field of points</span>
+    <span class="n">tree</span> <span class="o">=</span> <span class="n">KDTree</span><span class="p">(</span><span class="n">X_linear</span><span class="p">)</span>
+    <span class="n">angle_scores</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">pca</span> <span class="o">=</span> <span class="n">PCA</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">X_linear</span><span class="p">))):</span>
+        <span class="c1"># 2. Parameters for the chain</span>
+        <span class="n">start_idx</span> <span class="o">=</span> <span class="n">i</span>
+        <span class="n">chain_length</span> <span class="o">=</span> <span class="n">line_length</span>
+        <span class="n">chain</span> <span class="o">=</span> <span class="p">[</span><span class="n">start_idx</span><span class="p">]</span>
+        <span class="n">visited</span> <span class="o">=</span> <span class="p">{</span><span class="n">start_idx</span><span class="p">}</span>
+
+        <span class="c1"># 3. The Chaining Logic</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">chain_length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">current_pt</span> <span class="o">=</span> <span class="n">X_linear</span><span class="p">[</span><span class="n">chain</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+            <span class="c1"># We query more than 1 in case the absolute nearest is already in our chain</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">indices</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">current_pt</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">num_neighbors</span><span class="p">)</span>
+
+            <span class="n">found_next</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">for</span> <span class="n">neighbor_idx</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">neighbor_idx</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">visited</span><span class="p">:</span>
+                    <span class="n">chain</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">neighbor_idx</span><span class="p">)</span>
+                    <span class="n">visited</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">neighbor_idx</span><span class="p">)</span>
+                    <span class="n">found_next</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">break</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">found_next</span><span class="p">:</span>
+                <span class="k">break</span>
+
+
+        <span class="c1"># Compute Local Orientation via PCA</span>
+        <span class="n">pca</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_linear</span><span class="p">[</span><span class="n">chain</span><span class="p">])</span>
+        <span class="n">direction</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">components_</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">angle_radians</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">direction</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">direction</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># atan2(y, x)</span>
+        <span class="n">angle_scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">angle_radians</span><span class="p">))</span>
+
+    <span class="n">angle_scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">angle_scores</span><span class="p">)</span> <span class="o">-</span> <span class="mi">90</span>  <span class="c1"># Shift angles by 90 degrees</span>
+    <span class="n">angle_scores</span> <span class="o">=</span> <span class="n">angle_scores</span> <span class="o">%</span> <span class="mi">180</span>  <span class="c1"># Wrap angles to [0, 180)</span>
+    <span class="n">point_orientations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">binary_image</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">point_orientations</span><span class="p">[</span><span class="n">X_linear</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span>
+                       <span class="n">X_linear</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)]</span> <span class="o">=</span> <span class="n">angle_scores</span>
+    <span class="n">angle_profile</span><span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">point_orientations</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">point_orientations</span><span class="p">)]</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span>
+                                    <span class="n">bins</span><span class="o">=</span><span class="mi">180</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">point_orientations</span><span class="p">,</span> <span class="n">angle_profile</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Francis Corpuz, Elias Edideran, Glen Rice.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,261 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>nbs_uncles documentation &mdash; nbs_uncles  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="nbs_uncles" href="modules.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="#" class="icon icon-home">
+            nbs_uncles
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">API Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">nbs_uncles</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">nbs_uncles</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">nbs_uncles documentation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="nbs-uncles-documentation">
+<h1>nbs_uncles documentation<a class="headerlink" href="#nbs-uncles-documentation" title="Link to this heading"></a></h1>
+<p>Add your content using <code class="docutils literal notranslate"><span class="pre">reStructuredText</span></code> syntax. See the
+<a class="reference external" href="https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html">reStructuredText</a>
+documentation for details.</p>
+<section id="nbs-uncles">
+<h2>NBS <span style="color:red">Unc</span><span style="color:rgb(0, 0, 255)">L</span><span style="color:#00ff00">Es</span><a class="headerlink" href="#nbs-uncles" title="Link to this heading"></a></h2>
+<p><img alt="Alt text" src="https://raw.githubusercontent.com/franciscorpuz/nbs_uncles/refs/heads/main/assets/nbs_uncles.png" /></p>
+<p>“Feeling uncertain about that bathymetry? The UNCLES got you.”  - Surveyor Uncle</p>
+</section>
+<section id="nbs-uncertainty-estimation-libraries">
+<h2>NBS <span style="color:red">Unc</span>ertainty <span style="color:#00ff00">Es</span>timation <span style="color:rgb(0, 0, 255)">L</span>ibraries<a class="headerlink" href="#nbs-uncertainty-estimation-libraries" title="Link to this heading"></a></h2>
+<section id="motivation">
+<h3>Motivation<a class="headerlink" href="#motivation" title="Link to this heading"></a></h3>
+<p>Fully surveying the seafloor at the resolution required for all navigational and scientific needs is often prohibitively costly. In practice, bathymetric surveys collect direct depth measurements along sparse survey lines and use interpolation to represent the seafloor between them. Like all scientific measurements, these depths require an associated uncertainty estimate — but for interpolated regions, that uncertainty must account for how much the true seafloor may depart from the interpolated value.</p>
+<p>The core challenge is that we have no direct measurements in the very regions we are trying to characterize. This library addresses that challenge by exploiting the spatial structure of nearby known bathymetry. Under an assumption of spatial isotropy — that the statistical character of the seafloor is consistent regardless of direction — the variance observed in sampled survey lines can be used to estimate the likely variance at different spatial scales across the interpolated gaps.</p>
+</section>
+<section id="what-interpolation-uncertainty-does">
+<h3>What interpolation_uncertainty does<a class="headerlink" href="#what-interpolation-uncertainty-does" title="Link to this heading"></a></h3>
+<p>NBS_UncLEs implements and compares two families of methods for making this estimate:</p>
+<p>Spectral methods analyze the power spectral density (PSD) of the seafloor along known survey lines. By cumulatively summing variance across spatial frequency bins — starting from the highest frequency and working toward scales matching the distance from a known measurement — these methods estimate the likely interpolation error at any given location.
+Spatial methods use sliding-window statistics (standard deviation, min/max envelopes, Gaussian smoothing) computed directly from the depth field to characterize local variability.
+To evaluate and develop these methods, the library simulates sparse surveying on full-coverage raster datasets: it subsamples every N-th column as a synthetic survey line, linearly interpolates across the gaps, and computes the true residual between the interpolated and actual seafloor. This residual serves as ground truth for validating each uncertainty estimate across different seafloor types (flat, rough, sloped).</p>
+</section>
+<section id="installation">
+<h3>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h3>
+<section id="quick-install-pip">
+<h4>Quick install (pip)<a class="headerlink" href="#quick-install-pip" title="Link to this heading"></a></h4>
+<p>If you just want to use the library without modifying it:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/franciscorpuz/nbs_uncles.git
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note:</strong> This project depends on GDAL, which can be difficult to install via pip alone.
+If you run into issues, use the conda workflow below instead.</p>
+</div></blockquote>
+</section>
+<section id="for-conda-users-collaborators">
+<h4>For conda users / collaborators<a class="headerlink" href="#for-conda-users-collaborators" title="Link to this heading"></a></h4>
+<p>This is the recommended approach — it handles GDAL and other geospatial C dependencies
+reliably via conda-forge.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/franciscorpuz/nbs_uncles
+<span class="nb">cd</span><span class="w"> </span>nbs_uncles
+conda<span class="w"> </span>env<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>environment.yml
+conda<span class="w"> </span>activate<span class="w"> </span>nbs_uncles
+</pre></div>
+</div>
+<p>The environment includes an editable install (<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">.</span></code>) of the package itself,
+so any changes you make to <code class="docutils literal notranslate"><span class="pre">src/</span></code> are immediately available.</p>
+<p>To update your environment after a <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">pull</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>env<span class="w"> </span>update<span class="w"> </span>-f<span class="w"> </span>environment.yml<span class="w"> </span>--prune
+</pre></div>
+</div>
+</section>
+</section>
+<section id="getting-started">
+<h3>Getting started<a class="headerlink" href="#getting-started" title="Link to this heading"></a></h3>
+<p>See the notebooks in <code class="docutils literal notranslate"><span class="pre">notebooks/</span></code> for usage examples. The primary working notebook is
+<code class="docutils literal notranslate"><span class="pre">uncertainty_sim_nbs_dataset.ipynb</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">nbs_uncles</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">read_file</span><span class="p">,</span> <span class="n">show_depth</span><span class="p">,</span>
+    <span class="n">build_coverage_mask</span><span class="p">,</span>
+    <span class="n">compute_dominant_angle_radon_transform</span><span class="p">,</span> <span class="n">compute_local_orientation</span><span class="p">,</span>
+    <span class="n">detect_trackline_positions</span><span class="p">,</span> <span class="n">assign_depths_to_lines</span><span class="p">,</span>
+    <span class="n">build_uncertainty_raster</span><span class="p">,</span> <span class="n">undo_rotation</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skimage.morphology</span><span class="w"> </span><span class="kn">import</span> <span class="n">opening</span><span class="p">,</span> <span class="n">thin</span><span class="p">,</span> <span class="n">disk</span>
+
+<span class="c1"># 1. Load bathymetric raster</span>
+<span class="n">bathy_data</span> <span class="o">=</span> <span class="n">read_file</span><span class="p">(</span><span class="s2">"data/raster/H13060_MB_4m_MLLW_3of3.bag"</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">show_depth</span><span class="p">(</span><span class="n">bathy_data</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">'viridis'</span><span class="p">)</span>
+
+<span class="c1"># 2. Build binary coverage mask</span>
+<span class="n">bathy_binary</span> <span class="o">=</span> <span class="n">build_coverage_mask</span><span class="p">(</span><span class="n">bathy_data</span><span class="p">)</span>
+
+<span class="c1"># 3-4. Morphological filtering + skeletonisation to isolate tracklines</span>
+<span class="n">bathy_lines</span> <span class="o">=</span> <span class="n">bathy_binary</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">opening</span><span class="p">(</span><span class="n">bathy_binary</span><span class="p">,</span> <span class="n">disk</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
+<span class="n">bathy_thin</span> <span class="o">=</span> <span class="n">thin</span><span class="p">(</span><span class="n">bathy_lines</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
+<span class="c1"># 5. Radon transform to find dominant line orientations</span>
+<span class="n">dominant</span> <span class="o">=</span> <span class="n">compute_dominant_angle_radon_transform</span><span class="p">(</span><span class="n">bathy_thin</span><span class="p">,</span> <span class="n">circle</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># 6. PCA-based local angle estimation</span>
+<span class="n">local_orientations</span> <span class="o">=</span> <span class="n">compute_local_orientation</span><span class="p">(</span><span class="n">bathy_thin</span><span class="p">,</span> <span class="n">line_length</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">num_neighbors</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+
+<span class="c1"># 7-14. For each dominant angle: detect lines, assign depths, compute uncertainty</span>
+<span class="k">for</span> <span class="n">angle</span> <span class="ow">in</span> <span class="n">dominant</span><span class="p">[</span><span class="s1">'peaks'</span><span class="p">]:</span>
+    <span class="c1"># Extract pixels near this angle</span>
+    <span class="n">low</span><span class="p">,</span> <span class="n">high</span> <span class="o">=</span> <span class="p">(</span><span class="n">angle</span> <span class="o">-</span> <span class="mi">5</span><span class="p">)</span> <span class="o">%</span> <span class="mi">180</span><span class="p">,</span> <span class="p">(</span><span class="n">angle</span> <span class="o">+</span> <span class="mi">5</span><span class="p">)</span> <span class="o">%</span> <span class="mi">180</span>
+    <span class="k">if</span> <span class="n">low</span> <span class="o">&lt;</span> <span class="n">high</span><span class="p">:</span>
+        <span class="n">angle_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">local_orientations</span> <span class="o">&gt;=</span> <span class="n">low</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">local_orientations</span> <span class="o">&lt;</span> <span class="n">high</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">angle_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">local_orientations</span> <span class="o">&gt;=</span> <span class="n">low</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">local_orientations</span> <span class="o">&lt;</span> <span class="n">high</span><span class="p">)</span>
+
+    <span class="c1"># Detect trackline positions and assign depth values</span>
+    <span class="n">peaks</span><span class="p">,</span> <span class="n">restored_mask</span><span class="p">,</span> <span class="n">angle_to_rotate</span> <span class="o">=</span> <span class="n">detect_trackline_positions</span><span class="p">(</span>
+        <span class="n">angle_mask</span><span class="p">,</span> <span class="n">bathy_binary</span><span class="p">,</span> <span class="n">angle</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">depth_raster</span> <span class="o">=</span> <span class="n">assign_depths_to_lines</span><span class="p">(</span>
+        <span class="n">restored_mask</span><span class="p">,</span> <span class="n">bathy_binary</span><span class="p">,</span> <span class="n">bathy_data</span><span class="p">,</span> <span class="n">angle_to_rotate</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Compute spectral uncertainty and rotate back to original orientation</span>
+    <span class="n">uncertainty</span> <span class="o">=</span> <span class="n">build_uncertainty_raster</span><span class="p">(</span>
+        <span class="n">peaks</span><span class="p">,</span> <span class="n">restored_mask</span><span class="p">,</span> <span class="n">depth_raster</span><span class="p">,</span> <span class="n">bathy_data</span><span class="p">[</span><span class="s1">'metadata'</span><span class="p">][</span><span class="s1">'resolution'</span><span class="p">],</span>
+    <span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">undo_rotation</span><span class="p">(</span><span class="n">uncertainty</span><span class="p">,</span> <span class="n">angle_to_rotate</span><span class="p">,</span> <span class="n">bathy_binary</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</pre></div>
+</div>
+<section id="package-structure">
+<h4>Package structure<a class="headerlink" href="#package-structure" title="Link to this heading"></a></h4>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>nbs_ucnles
+├── io              — read_file (GDAL-backed raster/BAG I/O)
+├── visualization   — show_depth (plotting)
+├── preprocessing
+│   ├── morphology  — build_coverage_mask, morphological filters
+│   ├── orientation — Radon transform, PCA-based local angles
+│   └── geometry    — point rotation, undo_rotation
+├── methods         — compute_uncertainty (FFT/PSD spectral energy)
+└── pipeline        — detect_trackline_positions, assign_depths_to_lines,
+                      process_line_pair, build_uncertainty_raster
+</pre></div>
+</div>
+</section>
+</section>
+<section id="how-to-cite-nbs-uncles">
+<h3>How to cite nbs_uncles<a class="headerlink" href="#how-to-cite-nbs-uncles" title="Link to this heading"></a></h3>
+<p>NOAA - NOS
+National Bathymetric Source Project
+Link: https://nauticalcharts.noaa.gov/learn/nbs.html</p>
+</section>
+<section id="authors">
+<h3>Authors<a class="headerlink" href="#authors" title="Link to this heading"></a></h3>
+<p>This project is actively maintained by:<br />
+Francis Corpuz - https://github.com/franciscorpuz<br />
+Elias Adediran - https://github.com/eliasadediran<br />
+Glen Rice - https://github.com/GlenRice-NOAA</p>
+</section>
+</section>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">API Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">nbs_uncles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="nbs_uncles.html">nbs_uncles package</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading"></a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="modules.html" class="btn btn-neutral float-right" title="nbs_uncles" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Francis Corpuz, Elias Edideran, Glen Rice.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,1020 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>nbs_uncles.orientation.orientation_via_Radon &mdash; nbs_uncles  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            nbs_uncles
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">API Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">nbs_uncles</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">nbs_uncles</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">nbs_uncles.orientation.orientation_via_Radon</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for nbs_uncles.orientation.orientation_via_Radon</h1><div class="highlight"><pre>
+<span></span>
+
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skimage.transform</span><span class="w"> </span><span class="kn">import</span> <span class="n">radon</span><span class="p">,</span> <span class="n">iradon</span><span class="p">,</span> <span class="n">rotate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.ndimage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span><span class="n">maximum_filter</span><span class="p">,</span> <span class="n">zoom</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span>
+                           <span class="n">binary_dilation</span><span class="p">,</span> <span class="n">maximum_position</span><span class="p">,</span>
+                           <span class="nb">sum</span> <span class="k">as</span> <span class="n">ndi_sum</span><span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.signal</span><span class="w"> </span><span class="kn">import</span> <span class="n">find_peaks</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.orientation_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">find_temp_offset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.ndimage</span><span class="w"> </span><span class="kn">import</span> <span class="n">distance_transform_edt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skimage.draw</span><span class="w"> </span><span class="kn">import</span> <span class="n">line</span> <span class="k">as</span> <span class="n">draw_line</span>
+
+<div class="viewcode-block" id="orientation_via_Radon">
+<a class="viewcode-back" href="../../../nbs_uncles.orientation.html#nbs_uncles.orientation.orientation_via_Radon.orientation_via_Radon">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">orientation_via_Radon</span><span class="p">(</span><span class="n">binary_image</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+                        <span class="n">angle_info</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                        <span class="n">circle</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                        <span class="n">angular_tolerance</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+                        <span class="n">width_tolerance</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+                        <span class="n">min_intensity</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
+                        <span class="n">top_angles</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+                        <span class="n">do_offset</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                        <span class="n">zoom_factor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>
+                        <span class="n">show_plot</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Find the dominant orientation of linear features using the Radon transform.</span>
+
+<span class="sd">    Computes the Radon sinogram over ``test_angles`` by computing for the</span>
+<span class="sd">    angle whose projection column has the highest variance.</span>
+<span class="sd">    High variance indicates that projections along that angle produce</span>
+<span class="sd">    concentrated bright lines, suggesting presence of  linear features</span>
+<span class="sd">    aligned with that orientation.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    binary_image : np.ndarray</span>
+<span class="sd">        Binary image containing linear features.</span>
+<span class="sd">    angle_info : dict, optional</span>
+<span class="sd">        ``theta_info`` returned by a previous call; reuses its sinogram and</span>
+<span class="sd">        offset instead of recomputing the Radon transform.</span>
+<span class="sd">    circle : bool, optional</span>
+<span class="sd">        If ``True``, only pixels within the circle inscribed in the central</span>
+<span class="sd">        square are projected — Set to ``False`` as we need to reconstruct the image</span>
+<span class="sd">        using the original dimensions.</span>
+<span class="sd">    angular_tolerance : int | None, optional</span>
+<span class="sd">        Half-width in degrees of the suppression band around each angle in</span>
+<span class="sd">        ``remove_angles``. Default is 5.</span>
+<span class="sd">    width_tolerance : int | None, optional</span>
+<span class="sd">        minimum distance in pixels between two lines of the same family</span>
+<span class="sd">    min_intensity : float, optional</span>
+<span class="sd">        Minimum intensity of a pixel to be considered part of a linear feature.</span>
+<span class="sd">    top_angles : int, optional</span>
+<span class="sd">        Number of dominant angles to return. If set to 0, all detected angles are returned.</span>
+<span class="sd">    do_offset : bool, optional</span>
+<span class="sd">        Set to 'True' if data has near vertical or horizontal features</span>
+<span class="sd">        to offset for better peak detection. Default is ``False``.</span>
+<span class="sd">    zoom_factor : float, optional</span>
+<span class="sd">        Down-scaling factor applied before the Radon transform. Default is 2.0.</span>
+<span class="sd">    show_plot : bool, optional</span>
+<span class="sd">        Draw the log profile variance figure. Default is ``True``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    point_orientations : dict</span>
+<span class="sd">        ``{angle_deg: float_raster}`` with the pixels of each detected angle</span>
+<span class="sd">        family, plus ``'combined'`` holding all families. Background is NaN.</span>
+<span class="sd">    theta_info : dict</span>
+<span class="sd">        ``{'theta', 'sinogram', 'temp_offset'}``; pass it back as ``angle_info``</span>
+<span class="sd">        to skip the Radon transform on later calls.</span>
+<span class="sd">    """</span>
+    <span class="c1"># Remove excess whitespace around the tracks, then scale down for the Radon transform</span>
+    <span class="n">sub_image</span><span class="p">,</span> <span class="n">bounding_box</span> <span class="o">=</span> <span class="n">_sub_image</span><span class="p">(</span><span class="n">binary_image</span><span class="p">)</span>
+    <span class="n">input_image</span> <span class="o">=</span> <span class="n">zoom</span><span class="p">(</span><span class="n">sub_image</span><span class="p">,</span> <span class="n">zoom</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="n">zoom_factor</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">sinogram</span><span class="p">,</span> <span class="n">theta_range</span><span class="p">,</span> <span class="n">temp_offset</span> <span class="o">=</span> <span class="n">_compute_sinogram</span><span class="p">(</span><span class="n">input_image</span><span class="p">,</span> <span class="n">angle_info</span><span class="p">,</span>
+                                                           <span class="n">circle</span><span class="p">,</span> <span class="n">do_offset</span><span class="p">)</span>
+    <span class="n">log_profile_variance</span> <span class="o">=</span> <span class="n">_log_profile_variance</span><span class="p">(</span><span class="n">sinogram</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">show_plot</span><span class="p">:</span>
+        <span class="n">_plot_profile_variance</span><span class="p">(</span><span class="n">theta_range</span><span class="p">,</span> <span class="n">log_profile_variance</span><span class="p">)</span>
+
+    <span class="n">detected_angles_radon</span> <span class="o">=</span> <span class="n">_detect_dominant_angles</span><span class="p">(</span><span class="n">log_profile_variance</span><span class="p">,</span>
+                                                    <span class="n">angular_tolerance</span><span class="p">,</span> <span class="n">top_angles</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Detected peaks (xy) adjusted :"</span>
+          <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_radon_angle_to_xy</span><span class="p">(</span><span class="n">detected_angles_radon</span><span class="p">,</span><span class="w"> </span><span class="n">temp_offset</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="n">line_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">radon_angle</span> <span class="ow">in</span> <span class="n">detected_angles_radon</span><span class="p">:</span>
+        <span class="n">xy_angle</span> <span class="o">=</span> <span class="n">_radon_angle_to_xy</span><span class="p">(</span><span class="n">radon_angle</span><span class="p">,</span> <span class="n">temp_offset</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Reconstructing image from angle </span><span class="si">{</span><span class="n">xy_angle</span><span class="si">}</span><span class="s2"> degrees..."</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">" "</span><span class="p">)</span>
+        <span class="n">line_mask</span> <span class="o">=</span> <span class="n">_reconstruct_family_mask</span><span class="p">(</span><span class="n">sinogram</span><span class="p">,</span> <span class="n">theta_range</span><span class="p">,</span> <span class="n">radon_angle</span><span class="p">,</span>
+                                             <span class="n">input_image</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">circle</span><span class="p">,</span>
+                                             <span class="n">angular_tolerance</span><span class="p">,</span> <span class="n">min_intensity</span><span class="p">,</span>
+                                             <span class="n">zoom_factor</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Done."</span><span class="p">)</span>
+        <span class="n">line_mask</span> <span class="o">=</span> <span class="n">_fit_mask_to_shape</span><span class="p">(</span><span class="n">line_mask</span><span class="p">,</span> <span class="n">sub_image</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">line_dict</span><span class="p">[</span><span class="n">xy_angle</span><span class="p">]</span> <span class="o">=</span> <span class="n">_embed_in_full_image</span><span class="p">(</span><span class="n">line_mask</span><span class="p">,</span> <span class="n">binary_image</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+                                                   <span class="n">bounding_box</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Extending lines to full image width..."</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">" "</span><span class="p">)</span>
+    <span class="n">angle_extended</span> <span class="o">=</span> <span class="n">_extend_line_to_edges2</span><span class="p">(</span><span class="n">line_dict</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Done."</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Labeling points..."</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">" "</span><span class="p">)</span>
+    <span class="n">combined_angle_raster</span> <span class="o">=</span> <span class="n">_combine_angle_rasters</span><span class="p">(</span><span class="n">angle_extended</span><span class="p">,</span> <span class="n">binary_image</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">point_orientations</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">'combined'</span><span class="p">:</span> <span class="n">_label_points</span><span class="p">(</span><span class="n">combined_angle_raster</span><span class="p">,</span> <span class="n">binary_image</span><span class="p">,</span> <span class="n">width_tolerance</span><span class="p">),</span>
+    <span class="p">}</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Done."</span><span class="p">)</span>
+    <span class="n">point_orientations</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">_split_by_angle</span><span class="p">(</span><span class="n">point_orientations</span><span class="p">[</span><span class="s1">'combined'</span><span class="p">],</span>
+                                              <span class="n">angle_extended</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+
+    <span class="n">theta_info</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"theta"</span><span class="p">:</span> <span class="n">theta_range</span><span class="p">,</span>
+        <span class="s2">"sinogram"</span><span class="p">:</span> <span class="n">sinogram</span><span class="p">,</span>
+        <span class="s2">"temp_offset"</span><span class="p">:</span> <span class="n">temp_offset</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">point_orientations</span><span class="p">,</span> <span class="n">theta_info</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_log_profile_variance</span><span class="p">(</span><span class="n">sinogram</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Log-variance of each sinogram column (one value per projection angle).</span>
+
+<span class="sd">    Variance is the strength of the linear features at each angle.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    sinogram : np.ndarray</span>
+<span class="sd">        Radon sinogram of shape ``(n_projections, n_angles)``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        1-D array of length ``n_angles`` with ``log1p(var)`` of each column.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">sinogram</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_compute_sinogram</span><span class="p">(</span><span class="n">input_image</span><span class="p">,</span> <span class="n">angle_info</span><span class="p">,</span> <span class="n">circle</span><span class="p">,</span> <span class="n">do_offset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Compute the Radon sinogram of ``input_image``, or reuse a previous one.</span>
+
+<span class="sd">    If ``angle_info`` (a previous ``theta_info``) is given its sinogram and</span>
+<span class="sd">    offset are reused.  Otherwise the Radon transform is computed over</span>
+<span class="sd">    [0°, 180°); with ``do_offset`` it is recomputed starting at the angle found</span>
+<span class="sd">    by :func:`find_temp_offset`, so peaks near 0°/180° are not split by the edge.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_image : np.ndarray</span>
+<span class="sd">        Binary image passed to ``skimage.transform.radon``.</span>
+<span class="sd">    angle_info : dict or None</span>
+<span class="sd">        Previous ``theta_info`` with keys ``'sinogram'`` and ``'temp_offset'``.</span>
+<span class="sd">        If ``None`` the sinogram is computed.</span>
+<span class="sd">    circle : bool</span>
+<span class="sd">        Forwarded to ``skimage.transform.radon``.</span>
+<span class="sd">    do_offset : bool</span>
+<span class="sd">        Recompute the sinogram starting at the widest-valley angle. Ignored</span>
+<span class="sd">        when ``angle_info`` is given.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    sinogram : np.ndarray</span>
+<span class="sd">        Radon sinogram of shape ``(n_projections, 180)``.</span>
+<span class="sd">    theta_range : list or np.ndarray</span>
+<span class="sd">        Projection angles in degrees, one per sinogram column.</span>
+<span class="sd">    temp_offset : int</span>
+<span class="sd">        Angle (degrees) at which ``theta_range`` starts; 0 without an offset.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">angle_info</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Using pre-computed sinogram..."</span><span class="p">)</span>
+        <span class="n">temp_offset</span> <span class="o">=</span> <span class="n">angle_info</span><span class="p">[</span><span class="s1">'temp_offset'</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">angle_info</span><span class="p">[</span><span class="s1">'sinogram'</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">temp_offset</span><span class="p">,</span> <span class="n">temp_offset</span> <span class="o">+</span> <span class="mi">180</span><span class="p">),</span>
+                <span class="n">temp_offset</span><span class="p">)</span>
+
+    <span class="n">theta_range</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">180</span><span class="p">))</span>  <span class="c1"># 180 angles uniformly spaced over [0°, 180°)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Computing initial Radon transform..."</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">" "</span><span class="p">)</span>
+    <span class="n">sinogram</span> <span class="o">=</span> <span class="n">radon</span><span class="p">(</span><span class="n">input_image</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">theta_range</span><span class="p">,</span> <span class="n">circle</span><span class="o">=</span><span class="n">circle</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Done."</span><span class="p">)</span>
+
+    <span class="n">temp_offset</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">do_offset</span><span class="p">:</span>
+        <span class="n">temp_offset</span> <span class="o">=</span> <span class="n">find_temp_offset</span><span class="p">(</span><span class="n">_log_profile_variance</span><span class="p">(</span><span class="n">sinogram</span><span class="p">))</span>
+        <span class="n">theta_range</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">temp_offset</span><span class="p">,</span> <span class="n">temp_offset</span> <span class="o">+</span> <span class="mi">180</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Computing Radon transform with offset..."</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">" "</span><span class="p">)</span>
+        <span class="n">sinogram</span> <span class="o">=</span> <span class="n">radon</span><span class="p">(</span><span class="n">input_image</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">theta_range</span><span class="p">,</span> <span class="n">circle</span><span class="o">=</span><span class="n">circle</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Done."</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sinogram</span><span class="p">,</span> <span class="n">theta_range</span><span class="p">,</span> <span class="n">temp_offset</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_plot_profile_variance</span><span class="p">(</span><span class="n">theta_range</span><span class="p">,</span> <span class="n">log_profile_variance</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Plot the log profile variance against the image (x-y) angle.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    theta_range : array-like</span>
+<span class="sd">        Projection angles in degrees, one per profile value; may start at an</span>
+<span class="sd">        offset and is folded into [0, 180) before plotting.</span>
+<span class="sd">    log_profile_variance : array-like</span>
+<span class="sd">        Log profile variance, one value per entry of ``theta_range``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    None</span>
+<span class="sd">    """</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+    <span class="c1"># theta_range may start at temp_offset (e.g. 60..239); fold it into [0, 180) and</span>
+    <span class="c1"># re-sort so the x-axis always spans 0-180 (the profile is 180-periodic)</span>
+    <span class="n">theta_plot</span> <span class="o">=</span> <span class="n">_radon_angle_to_xy</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta_range</span><span class="p">)</span> <span class="o">%</span> <span class="mi">180</span><span class="p">)</span>
+    <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">theta_plot</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">theta_plot</span><span class="p">[</span><span class="n">order</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">log_profile_variance</span><span class="p">)[</span><span class="n">order</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">'blue'</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">180</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Log Profile Variance vs. Angle"</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Angle (degrees)"</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Log Profile Variance"</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">'both'</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.75</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'red'</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">'--'</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'0°'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'green'</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">'--'</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'90°'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">180</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'orange'</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">'--'</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'180°'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_detect_dominant_angles</span><span class="p">(</span><span class="n">log_profile_variance</span><span class="p">,</span> <span class="n">angular_tolerance</span><span class="p">,</span> <span class="n">top_angles</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Find the sinogram column indices of the profile peaks, most prominent first.</span>
+
+<span class="sd">    ``top_angles &lt;= 0`` keeps every detected peak.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    log_profile_variance : np.ndarray</span>
+<span class="sd">        1-D log profile variance, one value per sinogram column.</span>
+<span class="sd">    angular_tolerance : int</span>
+<span class="sd">        Minimum distance in columns between two detected peaks.</span>
+<span class="sd">    top_angles : int</span>
+<span class="sd">        Number of most prominent peaks to keep; ``&lt;= 0`` keeps all.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray of int</span>
+<span class="sd">        Column indices of the kept peaks, sorted by descending prominence.</span>
+<span class="sd">    """</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Detecting peaks in the log profile variance..."</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">" "</span><span class="p">)</span>
+    <span class="n">peaks</span><span class="p">,</span> <span class="n">properties</span> <span class="o">=</span> <span class="n">find_peaks</span><span class="p">(</span><span class="n">log_profile_variance</span><span class="p">,</span>
+                                   <span class="n">distance</span><span class="o">=</span><span class="n">angular_tolerance</span><span class="p">,</span>
+                                   <span class="n">prominence</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Done."</span><span class="p">)</span>
+
+    <span class="n">sorted_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">properties</span><span class="p">[</span><span class="s2">"prominences"</span><span class="p">])[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">top_angles</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">sorted_indices</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">top_angles</span><span class="p">:</span>
+        <span class="n">sorted_indices</span> <span class="o">=</span> <span class="n">sorted_indices</span><span class="p">[:</span><span class="n">top_angles</span><span class="p">]</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Keeping top </span><span class="si">{</span><span class="n">top_angles</span><span class="si">}</span><span class="s2"> detected angles."</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">peaks</span><span class="p">[</span><span class="n">sorted_indices</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_reconstruct_family_mask</span><span class="p">(</span><span class="n">sinogram</span><span class="p">,</span> <span class="n">theta_range</span><span class="p">,</span> <span class="n">radon_angle</span><span class="p">,</span> <span class="n">image_shape</span><span class="p">,</span> <span class="n">circle</span><span class="p">,</span>
+                             <span class="n">angular_tolerance</span><span class="p">,</span> <span class="n">min_intensity</span><span class="p">,</span> <span class="n">zoom_factor</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Reconstruct a boolean mask of the lines of one angle family.</span>
+
+<span class="sd">    Back-projects only the sinogram columns within ``angular_tolerance`` of</span>
+<span class="sd">    ``radon_angle``, normalises to [0, 1], thresholds at ``min_intensity`` and</span>
+<span class="sd">    zooms back up.  ``image_shape`` is the shape that was fed to ``radon``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    sinogram : np.ndarray</span>
+<span class="sd">        Radon sinogram of shape ``(n_projections, n_angles)``.</span>
+<span class="sd">    theta_range : list or np.ndarray</span>
+<span class="sd">        Projection angles in degrees, one per sinogram column.</span>
+<span class="sd">    radon_angle : int</span>
+<span class="sd">        Sinogram column index at the centre of the family.</span>
+<span class="sd">    image_shape : tuple of int</span>
+<span class="sd">        ``(rows, cols)`` of the image that was fed to ``radon``.</span>
+<span class="sd">    circle : bool</span>
+<span class="sd">        Must match the value used for the forward ``radon`` call.</span>
+<span class="sd">    angular_tolerance : int</span>
+<span class="sd">        Half-width in columns of the band around ``radon_angle``.</span>
+<span class="sd">    min_intensity : float</span>
+<span class="sd">        Threshold as a fraction of the maximum of the normalised reconstruction.</span>
+<span class="sd">    zoom_factor : float</span>
+<span class="sd">        Up-scaling factor applied to the mask before it is returned.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray of bool</span>
+<span class="sd">        Mask of ``image_shape`` scaled by ``zoom_factor``.</span>
+<span class="sd">    """</span>
+    <span class="c1"># Angular range for this family (sinogram column indices)</span>
+    <span class="n">theta_min</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">radon_angle</span> <span class="o">-</span> <span class="n">angular_tolerance</span><span class="p">)</span>
+    <span class="n">theta_max</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">sinogram</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">radon_angle</span> <span class="o">+</span> <span class="n">angular_tolerance</span><span class="p">)</span>
+    <span class="n">sinogram_band</span> <span class="o">=</span> <span class="n">sinogram</span><span class="p">[:,</span> <span class="n">theta_min</span><span class="p">:</span> <span class="n">theta_max</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+
+    <span class="c1"># circle must match the forward radon call, otherwise iradon assumes a</span>
+    <span class="c1"># different geometry and returns a min(H, W) square</span>
+    <span class="n">iradon_kwargs</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">if</span> <span class="n">circle</span> <span class="k">else</span> <span class="p">{</span><span class="s2">"output_size"</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="n">image_shape</span><span class="p">)}</span>
+    <span class="n">reconstructed</span> <span class="o">=</span> <span class="n">iradon</span><span class="p">(</span><span class="n">sinogram_band</span><span class="p">,</span>
+                           <span class="n">theta</span><span class="o">=</span><span class="n">theta_range</span><span class="p">[</span><span class="n">theta_min</span><span class="p">:</span> <span class="n">theta_max</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span>
+                           <span class="n">filter_name</span><span class="o">=</span><span class="s2">"ramp"</span><span class="p">,</span>
+                           <span class="n">circle</span><span class="o">=</span><span class="n">circle</span><span class="p">,</span> <span class="o">**</span><span class="n">iradon_kwargs</span><span class="p">)</span>
+
+    <span class="n">isolated_lines</span> <span class="o">=</span> <span class="n">_align_reconstruction</span><span class="p">(</span><span class="n">reconstructed</span><span class="p">,</span> <span class="n">image_shape</span><span class="p">,</span> <span class="n">circle</span><span class="p">)</span>
+    <span class="n">isolated_lines</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">isolated_lines</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">isolated_lines</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">isolated_lines</span> <span class="o">/=</span> <span class="n">isolated_lines</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+
+    <span class="n">line_mask</span> <span class="o">=</span> <span class="n">isolated_lines</span> <span class="o">&gt;</span> <span class="n">min_intensity</span> <span class="o">*</span> <span class="n">isolated_lines</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">zoom</span><span class="p">(</span><span class="n">line_mask</span><span class="p">,</span> <span class="n">zoom</span><span class="o">=</span><span class="n">zoom_factor</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_fit_mask_to_shape</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">shape</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Crop (bottom/right) or zero-pad (bottom/right) ``mask`` to ``shape``.</span>
+
+<span class="sd">    Scaling the image down and up can be off by a pixel or two.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mask : np.ndarray of bool</span>
+<span class="sd">        2-D mask to fit.</span>
+<span class="sd">    shape : tuple of int</span>
+<span class="sd">        Target ``(rows, cols)``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray of bool</span>
+<span class="sd">        Mask of exactly ``shape``.</span>
+<span class="sd">    """</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">mask</span><span class="p">[:</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">:</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+    <span class="n">pad_rows</span><span class="p">,</span> <span class="n">pad_cols</span> <span class="o">=</span> <span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">pad_rows</span> <span class="ow">or</span> <span class="n">pad_cols</span><span class="p">:</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">pad_rows</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">pad_cols</span><span class="p">)),</span>
+                      <span class="n">mode</span><span class="o">=</span><span class="s1">'constant'</span><span class="p">,</span> <span class="n">constant_values</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">mask</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_embed_in_full_image</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">full_shape</span><span class="p">,</span> <span class="n">bounding_box</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Place a cropped ``mask`` back at ``bounding_box`` of an empty ``full_shape`` canvas.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mask : np.ndarray of bool</span>
+<span class="sd">        Cropped mask, matching the bounding box size.</span>
+<span class="sd">    full_shape : tuple of int</span>
+<span class="sd">        ``(rows, cols)`` of the canvas.</span>
+<span class="sd">    bounding_box : tuple of int</span>
+<span class="sd">        ``(min_row, max_row, min_col, max_col)``, inclusive, as returned by</span>
+<span class="sd">        :func:`_sub_image`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray of bool</span>
+<span class="sd">        Canvas of ``full_shape`` with ``mask`` placed at ``bounding_box``.</span>
+<span class="sd">    """</span>
+    <span class="n">min_row</span><span class="p">,</span> <span class="n">max_row</span><span class="p">,</span> <span class="n">min_col</span><span class="p">,</span> <span class="n">max_col</span> <span class="o">=</span> <span class="n">bounding_box</span>
+    <span class="n">full</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">full_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="n">full</span><span class="p">[</span><span class="n">min_row</span><span class="p">:</span><span class="n">max_row</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">min_col</span><span class="p">:</span><span class="n">max_col</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">mask</span>
+    <span class="k">return</span> <span class="n">full</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_combine_angle_rasters</span><span class="p">(</span><span class="n">angle_masks</span><span class="p">,</span> <span class="n">shape</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Combine per-angle masks into one float raster; the first family claims a pixel.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    angle_masks : dict</span>
+<span class="sd">        ``{angle_deg: bool_mask}``, all masks of ``shape``.</span>
+<span class="sd">    shape : tuple of int</span>
+<span class="sd">        ``(rows, cols)`` of the output raster.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray of float</span>
+<span class="sd">        Raster of ``shape`` holding each pixel's angle; ``NaN`` where no mask is set.</span>
+<span class="sd">    """</span>
+    <span class="n">combined</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">angle</span><span class="p">,</span> <span class="n">angle_raster</span> <span class="ow">in</span> <span class="n">angle_masks</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">angle_raster</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">combined</span><span class="p">)</span>
+        <span class="n">combined</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">angle</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">combined</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_label_points</span><span class="p">(</span><span class="n">combined_angle_raster</span><span class="p">,</span> <span class="n">binary_image</span><span class="p">,</span> <span class="n">width_tolerance</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Give every (thickened) foreground pixel the angle of its nearest labelled pixel.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    combined_angle_raster : np.ndarray of float</span>
+<span class="sd">        Raster of angles, ``NaN`` where unlabelled.</span>
+<span class="sd">    binary_image : np.ndarray of bool</span>
+<span class="sd">        Foreground image to label.</span>
+<span class="sd">    width_tolerance : int</span>
+<span class="sd">        Side length in pixels of the square used to thicken ``binary_image``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray of float</span>
+<span class="sd">        Raster of the shape of ``binary_image``; the nearest labelled angle on</span>
+<span class="sd">        thickened foreground pixels, ``NaN`` elsewhere.</span>
+<span class="sd">    """</span>
+    <span class="c1"># EDT measures distance to the nearest zero pixel, so pass the "has angle"</span>
+    <span class="c1"># mask inverted: labelled pixels become 0, and return_indices gives the</span>
+    <span class="c1"># (row, col) of the nearest one for every pixel.</span>
+    <span class="n">has_angle</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">combined_angle_raster</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">ri</span><span class="p">,</span> <span class="n">ci</span><span class="p">)</span> <span class="o">=</span> <span class="n">distance_transform_edt</span><span class="p">(</span><span class="o">~</span><span class="n">has_angle</span><span class="p">,</span> <span class="n">return_indices</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">nearest_angle</span> <span class="o">=</span> <span class="n">combined_angle_raster</span><span class="p">[</span><span class="n">ri</span><span class="p">,</span> <span class="n">ci</span><span class="p">]</span>  <span class="c1"># nearest labelled value everywhere</span>
+    <span class="n">thickened_binary</span> <span class="o">=</span> <span class="n">binary_dilation</span><span class="p">(</span><span class="n">binary_image</span><span class="p">,</span>
+                                       <span class="n">structure</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">width_tolerance</span><span class="p">,</span> <span class="n">width_tolerance</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">thickened_binary</span><span class="p">,</span> <span class="n">nearest_angle</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_split_by_angle</span><span class="p">(</span><span class="n">combined</span><span class="p">,</span> <span class="n">angles</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Split a combined angle raster into one raster per angle.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    combined : np.ndarray of float</span>
+<span class="sd">        Raster of angles, ``NaN`` where unlabelled.</span>
+<span class="sd">    angles : iterable</span>
+<span class="sd">        Angles in degrees to extract.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">        ``{angle: raster}`` keeping only the pixels of ``combined`` labelled</span>
+<span class="sd">        with that angle; all other pixels are ``NaN``.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">angle</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">combined</span> <span class="o">==</span> <span class="nb">float</span><span class="p">(</span><span class="n">angle</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">angle</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">angle</span> <span class="ow">in</span> <span class="n">angles</span><span class="p">}</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_radon_angle_to_xy</span><span class="p">(</span><span class="n">radon_angle</span><span class="p">,</span> <span class="n">temp_offset</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Convert a Radon angle to the corresponding image (x-y) angle.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    radon_angle : float</span>
+<span class="sd">        Angle in degrees from the Radon transform.</span>
+<span class="sd">    temp_offset : float, optional</span>
+<span class="sd">        Offset applied to the Radon angles during peak detection. Default is 0.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    xy_angle : float</span>
+<span class="sd">        Corresponding angle in degrees in the image coordinate system.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">radon_angle</span> <span class="o">-</span> <span class="mi">90</span> <span class="o">+</span> <span class="n">temp_offset</span><span class="p">)</span> <span class="o">%</span> <span class="mi">180</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sub_image</span><span class="p">(</span><span class="n">image</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Crop the image to the bounding box of its foreground pixels.</span>
+
+<span class="sd">    An image with no foreground is returned whole, with the box spanning all of it.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    image : np.ndarray</span>
+<span class="sd">        2-D image whose non-zero pixels are the foreground.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    sub_image : np.ndarray</span>
+<span class="sd">        ``image`` cropped to the bounding box.</span>
+<span class="sd">    bounding_box : tuple of int</span>
+<span class="sd">        ``(min_row, max_row, min_col, max_col)``, inclusive.</span>
+<span class="sd">    """</span>
+    <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">cols</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">image</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">min_row</span><span class="p">,</span> <span class="n">max_row</span> <span class="o">=</span> <span class="n">rows</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">rows</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="n">min_col</span><span class="p">,</span> <span class="n">max_col</span> <span class="o">=</span> <span class="n">cols</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">cols</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="n">bounding_box</span> <span class="o">=</span> <span class="p">(</span><span class="n">min_row</span><span class="p">,</span> <span class="n">max_row</span><span class="p">,</span> <span class="n">min_col</span><span class="p">,</span> <span class="n">max_col</span><span class="p">)</span>
+    <span class="n">sub_image</span> <span class="o">=</span> <span class="n">image</span><span class="p">[</span><span class="n">min_row</span><span class="p">:</span><span class="n">max_row</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">min_col</span><span class="p">:</span><span class="n">max_col</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">sub_image</span><span class="p">,</span> <span class="n">bounding_box</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_radon_center</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">circle</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Pixel ``(row, col)`` of ``shape`` that skimage's radon/iradon treat as the rotation centre.</span>
+
+<span class="sd">    With ``circle=False`` the image is padded symmetrically about ``shape // 2``.</span>
+<span class="sd">    With ``circle=True`` it is first cropped to a centred square whose start</span>
+<span class="sd">    offset is rounded up, which shifts the centre by one pixel on odd excess.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    shape : tuple of int</span>
+<span class="sd">        ``(rows, cols)`` of the image.</span>
+<span class="sd">    circle : bool</span>
+<span class="sd">        The ``circle`` argument passed to ``radon``/``iradon``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tuple of int</span>
+<span class="sd">        ``(row, col)`` of the rotation centre.</span>
+<span class="sd">    """</span>
+    <span class="n">h</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">shape</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">circle</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">h</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">w</span> <span class="o">//</span> <span class="mi">2</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">((</span><span class="n">h</span> <span class="o">-</span> <span class="n">m</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))</span> <span class="o">+</span> <span class="n">m</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">((</span><span class="n">w</span> <span class="o">-</span> <span class="n">m</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))</span> <span class="o">+</span> <span class="n">m</span> <span class="o">//</span> <span class="mi">2</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_align_reconstruction</span><span class="p">(</span><span class="n">reconstructed</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">circle</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Place an ``iradon`` output onto a canvas of ``shape`` so pixels overlay the original image.</span>
+
+<span class="sd">    The reconstruction can be larger (``circle=False``) or smaller</span>
+<span class="sd">    (``circle=True``) than the original; pixels with no counterpart are 0.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    reconstructed : np.ndarray</span>
+<span class="sd">        2-D output of ``iradon``.</span>
+<span class="sd">    shape : tuple of int</span>
+<span class="sd">        ``(rows, cols)`` of the original image.</span>
+<span class="sd">    circle : bool</span>
+<span class="sd">        The ``circle`` argument used for the forward and inverse transforms.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Array of ``shape`` with the reconstruction overlaid on the original pixels.</span>
+<span class="sd">    """</span>
+    <span class="n">h</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">shape</span>
+    <span class="n">rh</span><span class="p">,</span> <span class="n">rw</span> <span class="o">=</span> <span class="n">reconstructed</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">cy</span><span class="p">,</span> <span class="n">cx</span> <span class="o">=</span> <span class="n">_radon_center</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">circle</span><span class="p">)</span>
+    <span class="n">oy</span><span class="p">,</span> <span class="n">ox</span> <span class="o">=</span> <span class="n">cy</span> <span class="o">-</span> <span class="n">rh</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">cx</span> <span class="o">-</span> <span class="n">rw</span> <span class="o">//</span> <span class="mi">2</span>  <span class="c1"># reconstructed (r, c) -&gt; image (r + oy, c + ox)</span>
+    <span class="n">aligned</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">reconstructed</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">r0</span><span class="p">,</span> <span class="n">c0</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">oy</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ox</span><span class="p">)</span>
+    <span class="n">r1</span><span class="p">,</span> <span class="n">c1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">oy</span> <span class="o">+</span> <span class="n">rh</span><span class="p">),</span> <span class="nb">min</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">ox</span> <span class="o">+</span> <span class="n">rw</span><span class="p">)</span>
+    <span class="n">aligned</span><span class="p">[</span><span class="n">r0</span><span class="p">:</span><span class="n">r1</span><span class="p">,</span> <span class="n">c0</span><span class="p">:</span><span class="n">c1</span><span class="p">]</span> <span class="o">=</span> <span class="n">reconstructed</span><span class="p">[</span><span class="n">r0</span> <span class="o">-</span> <span class="n">oy</span><span class="p">:</span><span class="n">r1</span> <span class="o">-</span> <span class="n">oy</span><span class="p">,</span> <span class="n">c0</span> <span class="o">-</span> <span class="n">ox</span><span class="p">:</span><span class="n">c1</span> <span class="o">-</span> <span class="n">ox</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">aligned</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_radon_line_endpoints</span><span class="p">(</span><span class="n">s_val</span><span class="p">,</span> <span class="n">theta_deg</span><span class="p">,</span> <span class="n">center</span><span class="p">,</span> <span class="n">shape</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Return the two ``(x, y)`` points where the Radon line ``(s, theta)`` crosses the image border.</span>
+
+<span class="sd">    skimage's projection offset is ``s = (x - cx)·cos(θ) − (y - cy)·sin(θ)``</span>
+<span class="sd">    with ``θ`` the Radon angle in degrees and ``(cy, cx)`` from ``_radon_center``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    s_val : float</span>
+<span class="sd">        Projection offset of the line.</span>
+<span class="sd">    theta_deg : float</span>
+<span class="sd">        Radon angle in degrees.</span>
+<span class="sd">    center : tuple of int</span>
+<span class="sd">        ``(cy, cx)`` rotation centre, from :func:`_radon_center`.</span>
+<span class="sd">    shape : tuple of int</span>
+<span class="sd">        ``(rows, cols)`` of the image.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    list of tuple or None</span>
+<span class="sd">        The two ``(x, y)`` border points, or ``None`` if the line does not</span>
+<span class="sd">        cross the image.</span>
+<span class="sd">    """</span>
+    <span class="n">cy</span><span class="p">,</span> <span class="n">cx</span> <span class="o">=</span> <span class="n">center</span>
+    <span class="n">h</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">shape</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">theta_deg</span><span class="p">)</span>
+    <span class="n">cos_t</span><span class="p">,</span> <span class="n">sin_t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+
+    <span class="n">pts</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">sin_t</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-6</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">w</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">cy</span> <span class="o">+</span> <span class="p">((</span><span class="n">x</span> <span class="o">-</span> <span class="n">cx</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos_t</span> <span class="o">-</span> <span class="n">s_val</span><span class="p">)</span> <span class="o">/</span> <span class="n">sin_t</span>
+            <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">y</span> <span class="o">&lt;=</span> <span class="n">h</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">pts</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+    <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">cos_t</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-6</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">h</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">cx</span> <span class="o">+</span> <span class="p">(</span><span class="n">s_val</span> <span class="o">+</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">cy</span><span class="p">)</span> <span class="o">*</span> <span class="n">sin_t</span><span class="p">)</span> <span class="o">/</span> <span class="n">cos_t</span>
+            <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">x</span> <span class="o">&lt;=</span> <span class="n">w</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">pts</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+
+    <span class="c1"># Remove duplicate corner matches</span>
+    <span class="n">unique_pts</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">pts</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span> <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">unique_pts</span><span class="p">):</span>
+            <span class="n">unique_pts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">unique_pts</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">unique_pts</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="k">else</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_extend_lines_to_edges</span><span class="p">(</span><span class="n">angle_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+                           <span class="n">min_line_factor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+                           <span class="n">band_width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span>
+                           <span class="n">line_width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Replace the segmented lines of each angle family with lines spanning the image.</span>
+
+<span class="sd">    For every ``(angle, binary_image)`` pair:</span>
+
+<span class="sd">    1. rotate the image by ``90 - angle`` so the lines become vertical,</span>
+<span class="sd">    2. sum each column,</span>
+<span class="sd">    3. find peaks in that sum (column positions of the lines),</span>
+<span class="sd">    4. draw a full-height vertical line at each peak column,</span>
+<span class="sd">    5. rotate back and crop to the original shape.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    angle_dict : dict</span>
+<span class="sd">        ``{angle_deg: binary_image}`` where each image holds lines at ``angle_deg``</span>
+<span class="sd">        from the x-axis (image convention, as built in ``orientation_via_Radon``).</span>
+<span class="sd">        All images are assumed to have the same shape.</span>
+<span class="sd">    min_line_factor : float, optional</span>
+<span class="sd">        Minimum peak height as a fraction of the tallest column sum.</span>
+<span class="sd">        Default is ``0.1``.</span>
+<span class="sd">    band_width : int, optional</span>
+<span class="sd">        Minimum horizontal separation (pixels) between adjacent peaks; should</span>
+<span class="sd">        approximate the expected inter-line spacing. Default is ``40``.</span>
+<span class="sd">    line_width : int, optional</span>
+<span class="sd">        Width in pixels of the drawn lines. Default is ``3``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    extended : dict</span>
+<span class="sd">        ``{angle_deg: bool_image}`` with the same shape as the input images.</span>
+<span class="sd">        Each image contains the extended lines of that family, running from edge</span>
+<span class="sd">        to edge of the image.</span>
+<span class="sd">    """</span>
+    <span class="n">extended</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">angle</span><span class="p">,</span> <span class="n">image</span> <span class="ow">in</span> <span class="n">angle_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">orig_shape</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">angle_to_rotate</span> <span class="o">=</span> <span class="mf">90.0</span> <span class="o">-</span> <span class="n">angle</span>   <span class="c1"># project convention, see pipeline/tracklines.py</span>
+
+        <span class="c1"># 1. Rotate so the lines are vertical (nearest neighbour keeps it binary)</span>
+        <span class="n">rotated</span> <span class="o">=</span> <span class="n">rotate</span><span class="p">(</span><span class="n">image</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">),</span> <span class="n">angle</span><span class="o">=</span><span class="n">angle_to_rotate</span><span class="p">,</span> <span class="n">resize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                         <span class="n">order</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">preserve_range</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># 2. Column sum: each line contributes a tall bump at its x-position</span>
+        <span class="n">projection</span> <span class="o">=</span> <span class="n">rotated</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">projection</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">extended</span><span class="p">[</span><span class="n">angle</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">orig_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="c1"># 3. Column positions of the lines</span>
+        <span class="n">min_line_length</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">projection</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">*</span> <span class="n">min_line_factor</span><span class="p">)</span>
+        <span class="n">peaks</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">find_peaks</span><span class="p">(</span><span class="n">projection</span><span class="p">,</span>
+                              <span class="n">height</span><span class="o">=</span><span class="n">min_line_length</span><span class="p">,</span>
+                              <span class="n">distance</span><span class="o">=</span><span class="n">band_width</span><span class="p">,</span>
+                              <span class="n">prominence</span><span class="o">=</span><span class="n">min_line_length</span><span class="p">)</span>
+
+        <span class="c1"># 4. Full-height vertical line at each peak (top to bottom of the rotated canvas)</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">rotated</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+        <span class="n">half</span> <span class="o">=</span> <span class="n">line_width</span> <span class="o">//</span> <span class="mi">2</span>
+        <span class="k">for</span> <span class="n">peak</span> <span class="ow">in</span> <span class="n">peaks</span><span class="p">:</span>
+            <span class="n">lines</span><span class="p">[:,</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">peak</span> <span class="o">-</span> <span class="n">half</span><span class="p">):</span> <span class="n">peak</span> <span class="o">-</span> <span class="n">half</span> <span class="o">+</span> <span class="n">line_width</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="c1"># 5. Rotate back and crop the padded canvas to the original shape</span>
+        <span class="n">back</span> <span class="o">=</span> <span class="n">rotate</span><span class="p">(</span><span class="n">lines</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">),</span> <span class="n">angle</span><span class="o">=-</span><span class="n">angle_to_rotate</span><span class="p">,</span> <span class="n">resize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                      <span class="n">order</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">preserve_range</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">row_off</span> <span class="o">=</span> <span class="p">(</span><span class="n">back</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">orig_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">//</span> <span class="mi">2</span>
+        <span class="n">col_off</span> <span class="o">=</span> <span class="p">(</span><span class="n">back</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">orig_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">//</span> <span class="mi">2</span>
+        <span class="n">extended</span><span class="p">[</span><span class="n">angle</span><span class="p">]</span> <span class="o">=</span> <span class="n">back</span><span class="p">[</span><span class="n">row_off</span><span class="p">:</span> <span class="n">row_off</span> <span class="o">+</span> <span class="n">orig_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                               <span class="n">col_off</span><span class="p">:</span> <span class="n">col_off</span> <span class="o">+</span> <span class="n">orig_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">extended</span>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_extend_line_to_edges2</span><span class="p">(</span><span class="n">angle_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+                           <span class="n">min_line_factor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+                           <span class="n">band_width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span>
+                           <span class="n">line_width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Rotation-free version of :func:`_extend_lines_to_edges` (same inputs and outputs).</span>
+
+<span class="sd">    Rotating an image so the lines become vertical is only a change of</span>
+<span class="sd">    coordinates: a pixel's column in the rotated image is its distance ``u``</span>
+<span class="sd">    across the line family, ``u = x*sin(a) + y*cos(a)`` (``a`` = image angle,</span>
+<span class="sd">    0° = horizontal, 90° = vertical). So instead of resampling the image:</span>
+
+<span class="sd">    1. compute ``u`` for every foreground pixel,</span>
+<span class="sd">    2. histogram ``u`` in 1-pixel bins (== column sums of the rotated image),</span>
+<span class="sd">    3. find peaks in that histogram (one per line),</span>
+<span class="sd">    4. draw each line as a chord across the canvas with</span>
+<span class="sd">       :func:`_radon_line_endpoints` and ``skimage.draw.line``.</span>
+
+<span class="sd">    Memory scales with the number of foreground pixels, not with the (up to</span>
+<span class="sd">    ~4x larger) padded canvas that rotating and rotating back requires.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    angle_dict : dict</span>
+<span class="sd">        ``{angle_deg: binary_image}``, image-convention angles. All images are</span>
+<span class="sd">        assumed to have the same shape.</span>
+<span class="sd">    min_line_factor : float, optional</span>
+<span class="sd">        Minimum peak height as a fraction of the tallest bin. Default ``0.1``.</span>
+<span class="sd">    band_width : int, optional</span>
+<span class="sd">        Minimum separation in pixels between adjacent lines. Default ``40``.</span>
+<span class="sd">    line_width : int, optional</span>
+<span class="sd">        Width in pixels of the drawn lines. Default ``5``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    extended : dict</span>
+<span class="sd">        ``{angle_deg: bool_image}``, lines running from edge to edge.</span>
+<span class="sd">    """</span>
+    <span class="n">extended</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">angle</span><span class="p">,</span> <span class="n">image</span> <span class="ow">in</span> <span class="n">angle_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">h</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+
+        <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">rows</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">extended</span><span class="p">[</span><span class="n">angle</span><span class="p">]</span> <span class="o">=</span> <span class="n">out</span>
+            <span class="k">continue</span>
+
+        <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">angle</span><span class="p">)</span>
+        <span class="c1"># 1-2. distance across the lines for every foreground pixel, binned per pixel</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="n">cols</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">+</span> <span class="n">rows</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+        <span class="n">u0</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">min</span><span class="p">()))</span>
+        <span class="c1"># zero margin: find_peaks cannot report a peak at the array boundary, and the</span>
+        <span class="c1"># rotated canvas used to provide this padding implicitly</span>
+        <span class="n">projection</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">u</span> <span class="o">-</span> <span class="n">u0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)),</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">u0</span> <span class="o">-=</span> <span class="mi">1</span>                                   <span class="c1"># bin i  &lt;-&gt;  u = u0 + i</span>
+
+        <span class="c1"># 3. line positions</span>
+        <span class="n">min_line_length</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">projection</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">*</span> <span class="n">min_line_factor</span><span class="p">)</span>
+        <span class="n">peaks</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">find_peaks</span><span class="p">(</span><span class="n">projection</span><span class="p">,</span>
+                              <span class="n">height</span><span class="o">=</span><span class="n">min_line_length</span><span class="p">,</span>
+                              <span class="n">distance</span><span class="o">=</span><span class="n">band_width</span><span class="p">,</span>
+                              <span class="n">prominence</span><span class="o">=</span><span class="n">min_line_length</span><span class="p">)</span>
+
+        <span class="c1"># 4. one chord per peak; u -&gt; Radon offset s = u_centre - u, Radon angle = a + 90°</span>
+        <span class="n">cy</span><span class="p">,</span> <span class="n">cx</span> <span class="o">=</span> <span class="n">h</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">w</span> <span class="o">//</span> <span class="mi">2</span>
+        <span class="n">u_centre</span> <span class="o">=</span> <span class="n">cx</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">+</span> <span class="n">cy</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+        <span class="n">half</span> <span class="o">=</span> <span class="p">(</span><span class="n">line_width</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">peaks</span><span class="p">:</span>
+            <span class="c1"># half-pixel steps across the line: 1-px steps leave gaps at oblique angles</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="n">half</span><span class="p">,</span> <span class="n">half</span> <span class="o">+</span> <span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">):</span>
+                <span class="n">endpoints</span> <span class="o">=</span> <span class="n">_radon_line_endpoints</span><span class="p">(</span><span class="n">u_centre</span> <span class="o">-</span> <span class="p">(</span><span class="n">u0</span> <span class="o">+</span> <span class="n">p</span> <span class="o">+</span> <span class="n">k</span><span class="p">),</span> <span class="n">angle</span> <span class="o">+</span> <span class="mf">90.0</span><span class="p">,</span>
+                                                  <span class="p">(</span><span class="n">cy</span><span class="p">,</span> <span class="n">cx</span><span class="p">),</span> <span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">endpoints</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">),</span> <span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">)</span> <span class="o">=</span> <span class="n">endpoints</span>
+                <span class="n">rr</span><span class="p">,</span> <span class="n">cc</span> <span class="o">=</span> <span class="n">draw_line</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">y1</span><span class="p">)),</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">x1</span><span class="p">)),</span>
+                                   <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">y2</span><span class="p">)),</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">x2</span><span class="p">)))</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">rr</span><span class="p">,</span> <span class="n">cc</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">extended</span><span class="p">[</span><span class="n">angle</span><span class="p">]</span> <span class="o">=</span> <span class="n">out</span>
+    <span class="k">return</span> <span class="n">extended</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_collapse_candidates</span><span class="p">(</span><span class="n">peak_candidates</span><span class="p">,</span> <span class="n">sinogram</span><span class="p">,</span> <span class="n">r_gap</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Reduce candidate cells to one (r_idx, theta_idx) per physical line.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    peak_candidates : np.ndarray of bool</span>
+<span class="sd">        ``(r, theta)`` mask, e.g. local_max &amp; band_mask &amp; above-threshold.</span>
+<span class="sd">    sinogram : np.ndarray</span>
+<span class="sd">        The ``(r, theta)`` array the candidates came from.</span>
+<span class="sd">    r_gap : int, optional</span>
+<span class="sd">        Candidates whose r differs by up to this many rows (in adjacent</span>
+<span class="sd">        theta columns) are treated as the same line. Default is 2.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    s_indices : np.ndarray of int</span>
+<span class="sd">        Row (r) index of the strongest cell of each line.</span>
+<span class="sd">    a_indices : np.ndarray of int</span>
+<span class="sd">        Column (theta) index of the strongest cell of each line.</span>
+<span class="sd">    strength : np.ndarray of float</span>
+<span class="sd">        Total sinogram energy of each line.</span>
+<span class="sd">    """</span>
+    <span class="c1"># Grow candidates along r only, so crests that drift a few rows between</span>
+    <span class="c1"># neighbouring columns still touch and end up in the same component.</span>
+    <span class="n">grown</span> <span class="o">=</span> <span class="n">binary_dilation</span><span class="p">(</span><span class="n">peak_candidates</span><span class="p">,</span>
+                            <span class="n">structure</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="n">r_gap</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">))</span>
+
+    <span class="c1"># 8-connectivity links cells in adjacent theta columns (including diagonals)</span>
+    <span class="n">labels</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">label</span><span class="p">(</span><span class="n">grown</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">))</span>
+
+    <span class="c1"># Only the original candidates may win, not the cells added by the dilation</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">peak_candidates</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">ids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">best</span> <span class="o">=</span> <span class="n">maximum_position</span><span class="p">(</span><span class="n">sinogram</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">ids</span><span class="p">)</span>   <span class="c1"># strongest cell per blob</span>
+    <span class="n">strength</span> <span class="o">=</span> <span class="n">ndi_sum</span><span class="p">(</span><span class="n">sinogram</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">ids</span><span class="p">)</span>        <span class="c1"># optional: total energy</span>
+
+    <span class="n">s_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">best</span><span class="p">])</span>
+    <span class="n">a_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">best</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">s_indices</span><span class="p">,</span> <span class="n">a_indices</span><span class="p">,</span> <span class="n">strength</span>
+
+
+
+
+
+
+
+<span class="c1"># Experimental Codes</span>
+
+    <span class="c1"># setup 1D local maximum filter for each angle in the tolerance range</span>
+    <span class="n">neighborhood_size</span> <span class="o">=</span> <span class="p">(</span><span class="n">width_tolerance</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># (s-radius, theta-radius)</span>
+    <span class="n">local_max</span> <span class="o">=</span> <span class="n">maximum_filter</span><span class="p">(</span><span class="n">sinogram</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">neighborhood_size</span><span class="p">)</span> <span class="o">==</span> <span class="n">sinogram</span>
+    <span class="n">min_intensity</span> <span class="o">=</span> <span class="n">min_intensity</span> <span class="o">*</span> <span class="n">sinogram</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+    <span class="n">num_projections</span> <span class="o">=</span> <span class="n">sinogram</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">r_coords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_projections</span><span class="p">)</span> <span class="o">-</span> <span class="n">num_projections</span> <span class="o">//</span> <span class="mi">2</span>
+    <span class="n">radon_center</span> <span class="o">=</span> <span class="n">_radon_center</span><span class="p">(</span><span class="n">input_image</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">circle</span><span class="p">)</span>
+    <span class="n">line_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="c1"># # Plot the sinogram with the band mask highlighted</span>
+<span class="c1"># plt.figure(figsize=(10, 5))</span>
+<span class="c1"># plt.imshow(1 - band_mask, cmap='gray', aspect='auto', extent=[0, 180, num_projections, 0])</span>
+<span class="c1"># plt.colorbar(label='Intensity')</span>
+<span class="c1"># plt.title(f"Sinogram with Band Mask for Angle {radon_angle}° (±{angular_tolerance}°)")</span>
+<span class="c1"># plt.axvline(x=radon_theta_min, color='red', linestyle='--', label='Band Min')</span>
+<span class="c1"># plt.axvline(x=radon_theta_max, color='blue', linestyle='--', label='Band Max')</span>
+<span class="c1"># plt.legend()</span>
+<span class="c1"># plt.xlabel('Angle (degrees)')</span>
+<span class="c1"># plt.ylabel('Projection Position (pixels)')</span>
+<span class="c1"># plt.show()</span>
+
+        <span class="c1"># Candidate peaks: must be local 1D maximum, above noise, and in angle band</span>
+        <span class="c1"># min_intensity is a hyperparameter, needs to be tuned for each dataset</span>
+        <span class="c1"># peak_candidates = local_max &amp; band_mask &amp; (sinogram &gt;= min_intensity)</span>
+        <span class="c1"># s_indices, angle_sub_indices = np.where(peak_candidates)</span>
+        <span class="c1"># peak_candidates = local_max &amp; band_mask &amp; (sinogram &gt;= min_intensity)</span>
+        <span class="c1"># s_indices, angle_sub_indices, _ = _collapse_candidates(peak_candidates, sinogram,</span>
+        <span class="c1">#                                                       r_gap=pixel_tolerance // 2)</span>
+        <span class="c1"># first_line_of_family = True</span>
+
+    <span class="c1">#     # Compute the angle in the original image coordinate system (x-y) for this family</span>
+    <span class="c1">#     xy_angle = (theta[radon_angle] + 90) % 180</span>
+    <span class="c1">#     peaks_xy.append(xy_angle)</span>
+    <span class="c1">#     # print(f"Plotting angle family {xy_angle}...")</span>
+    <span class="c1">#     # fig, ax = plt.subplots(figsize=(9, 9))</span>
+    <span class="c1">#     # ax.imshow(1 - input_image, cmap="gray")</span>
+    <span class="c1">#     # ax.set_title(f"Angle Family: {xy_angle}")</span>
+    <span class="c1">#</span>
+    <span class="c1">#     print(f"number of lines: {len(s_indices)} for angle family {xy_angle}° (±{angular_tolerance}°)")</span>
+    <span class="c1">#     s_val = r_coords[s_indices]</span>
+    <span class="c1">#     # Plot s_indices distribution for this angle family</span>
+    <span class="c1">#     plt.figure(figsize=(10, 5))</span>
+    <span class="c1">#     plt.hist(s_val, bins=sinogram.shape[0], color='blue', alpha=0.7)</span>
+    <span class="c1">#     plt.title(f"Distribution of s_indices for angle family {xy_angle}° (±{angular_tolerance}°)")</span>
+    <span class="c1">#     plt.xlabel("s_index")</span>
+    <span class="c1">#     plt.ylabel("Frequency")</span>
+    <span class="c1">#     plt.grid(axis='y', alpha=0.75)</span>
+    <span class="c1">#     plt.show()</span>
+    <span class="c1">#</span>
+    <span class="c1"># return None, None</span>
+
+
+        <span class="c1"># for s_idx, a_idx in zip(s_indices, angle_sub_indices):</span>
+        <span class="c1">#     s_val = r_coords[s_idx]</span>
+        <span class="c1">#     # Use the column where this line actually peaks, not the family centre</span>
+        <span class="c1">#     # The angle is computed in the Radon space, so we need to convert it to the image space</span>
+        <span class="c1">#     xy_theta = (radon_angle - 90 - temp_offset) % 180.0</span>
+        <span class="c1">#     endpoints = _radon_line_endpoints(s_val, xy_theta, radon_center, binary_image.shape)</span>
+        <span class="c1">#     line_mask = np.zeros_like(binary_image, dtype=bool)</span>
+        <span class="c1">#</span>
+        <span class="c1">#     # print(f"Drawing endpoints for line at angle {xy_theta}° with s={s_val}: {endpoints}")</span>
+        <span class="c1">#     if endpoints is not None:</span>
+        <span class="c1">#         (x1, y1), (x2, y2) = endpoints</span>
+        <span class="c1">#         # Set points between the endpoints to True in the line_mask</span>
+        <span class="c1">#         rr, cc = np.linspace(y1, y2, num=1000), np.linspace(x1, x2, num=1000)</span>
+        <span class="c1">#         rr = np.clip(np.round(rr).astype(int), 0, binary_image.shape[0] - 1)</span>
+        <span class="c1">#         cc = np.clip(np.round(cc).astype(int), 0, binary_image.shape[1] - 1)</span>
+        <span class="c1">#         line_mask[rr, cc] = True</span>
+        <span class="c1">#     angle_dict[xy_theta] = line_mask</span>
+
+                <span class="c1"># label_text = (</span>
+                <span class="c1">#     f"Angle Family {xy_angle}° (±{angular_tolerance}°)"</span>
+                <span class="c1">#     if first_line_of_family</span>
+                <span class="c1">#     else ""</span>
+                <span class="c1"># )</span>
+                <span class="c1"># ax.plot(</span>
+                <span class="c1">#     [x1, x2],</span>
+                <span class="c1">#     [y1, y2],</span>
+                <span class="c1">#     color=color,</span>
+                <span class="c1">#     linewidth=1.75,</span>
+                <span class="c1">#     alpha=0.9,</span>
+                <span class="c1">#     label=label_text,</span>
+                <span class="c1"># )</span>
+                <span class="c1"># first_line_of_family = False</span>
+
+
+    <span class="c1"># for i, radon_angle in enumerate(detected_angles_radon):</span>
+    <span class="c1">#     # Define the angular range for this family (sinogram column indices)</span>
+    <span class="c1">#     radon_theta_min = max(0, radon_angle - angular_tolerance)</span>
+    <span class="c1">#     radon_theta_max = min(sinogram.shape[1] - 1, radon_angle + angular_tolerance)</span>
+
+        <span class="c1"># Create a band mask for this angle</span>
+        <span class="c1"># band_mask = np.zeros_like(sinogram, dtype=float)</span>
+        <span class="c1"># band_mask[:, radon_theta_min: radon_theta_max + 1] = sinogram[:, radon_theta_min: radon_theta_max + 1]</span>
+
+        <span class="c1"># Candidate peaks: must be local 1D maximum, above noise, and in angle band</span>
+        <span class="c1"># min_intensity is a hyperparameter, needs to be tuned for each dataset</span>
+        <span class="c1"># peak_candidates = local_max &amp; band_mask &amp; (sinogram &gt;= min_intensity)</span>
+        <span class="c1"># s_indices, angle_sub_indices = np.where(peak_candidates)</span>
+        <span class="c1"># peak_candidates = local_max &amp; band_mask &amp; (sinogram &gt;= min_intensity)</span>
+        <span class="c1"># s_indices, angle_sub_indices, _ = _collapse_candidates(peak_candidates, sinogram,</span>
+        <span class="c1">#                                                       r_gap=width_tolerance // 2)</span>
+
+        <span class="c1"># xy_angle = _radon_angle_to_xy(radon_angle, temp_offset)</span>
+        <span class="c1"># print(f"number of lines: {len(s_indices)} for angle family {xy_angle}° (±{angular_tolerance}°)")</span>
+        <span class="c1"># s_val = r_coords[s_indices]</span>
+        <span class="c1"># # Plot s_indices distribution for this angle family</span>
+        <span class="c1"># plt.figure(figsize=(10, 5))</span>
+        <span class="c1"># plt.hist(s_val, bins=sinogram.shape[0], color='blue', alpha=0.7)</span>
+        <span class="c1"># plt.title(f"Distribution of s_indices for angle family {xy_angle}° (±{angular_tolerance}°)")</span>
+        <span class="c1"># plt.xlabel("s_index")</span>
+        <span class="c1"># plt.ylabel("Frequency")</span>
+        <span class="c1"># plt.grid(axis='y', alpha=0.75)</span>
+        <span class="c1"># plt.show()</span>
+
+
+
+        <span class="c1"># for s_idx, a_idx in zip(s_indices, angle_sub_indices):</span>
+        <span class="c1">#     s_val = r_coords[s_idx]</span>
+        <span class="c1">#     # Use the column where this line actually peaks, not the family centre</span>
+        <span class="c1">#     # The angle is computed in the Radon space, so we need to convert it to the image space</span>
+        <span class="c1">#     xy_theta = (radon_angle - 90 - temp_offset) % 180.0</span>
+        <span class="c1">#     endpoints = _radon_line_endpoints(s_val, xy_theta, radon_center, binary_image.shape)</span>
+        <span class="c1">#     line_mask = np.zeros_like(binary_image, dtype=bool)</span>
+        <span class="c1">#</span>
+        <span class="c1">#     # print(f"Drawing endpoints for line at angle {xy_theta}° with s={s_val}: {endpoints}")</span>
+        <span class="c1">#     if endpoints is not None:</span>
+        <span class="c1">#         (x1, y1), (x2, y2) = endpoints</span>
+        <span class="c1">#         # Set points between the endpoints to True in the line_mask</span>
+        <span class="c1">#         rr, cc = np.linspace(y1, y2, num=1000), np.linspace(x1, x2, num=1000)</span>
+        <span class="c1">#         rr = np.clip(np.round(rr).astype(int), 0, binary_image.shape[0] - 1)</span>
+        <span class="c1">#         cc = np.clip(np.round(cc).astype(int), 0, binary_image.shape[1] - 1)</span>
+        <span class="c1">#         line_mask[rr, cc] = True</span>
+        <span class="c1">#     line_dict[xy_theta] = line_mask</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Francis Corpuz, Elias Edideran, Glen Rice.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

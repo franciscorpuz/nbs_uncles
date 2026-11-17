@@ -1,0 +1,295 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>nbs_uncles.pipeline.uncertainty &mdash; nbs_uncles  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            nbs_uncles
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">API Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">nbs_uncles</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">nbs_uncles</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">nbs_uncles.pipeline.uncertainty</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for nbs_uncles.pipeline.uncertainty</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">nbs_uncles.methods.spectral</span><span class="w"> </span><span class="kn">import</span> <span class="n">spectral_estimator</span>
+
+
+<div class="viewcode-block" id="process_line_pair">
+<a class="viewcode-back" href="../../../nbs_uncles.pipeline.html#nbs_uncles.pipeline.uncertainty.process_line_pair">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">process_line_pair</span><span class="p">(</span>
+    <span class="n">line_pair</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+    <span class="n">restored_mask</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">current_depth_raster</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">resolution</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'psd'</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Compute the RMS interpolation uncertainty for one pair of adjacent tracklines.</span>
+
+<span class="sd">    For the two tracklines at columns ``line_pair[0]`` and ``line_pair[1]``,</span>
+<span class="sd">    this function:</span>
+
+<span class="sd">    1. Extracts the valid row extent for each line from ``restored_mask``.</span>
+<span class="sd">    2. Interpolates any depth gaps along each line with ``np.interp``.</span>
+<span class="sd">    3. Clips both profiles to their shared row overlap.</span>
+<span class="sd">    4. Subtracts the mean (DC removal) so the spectrum captures seafloor</span>
+<span class="sd">       roughness rather than absolute depth.</span>
+<span class="sd">    5. Computes the one-sided PSD via :func:`compute_uncertainty` using the</span>
+<span class="sd">       inter-line distance as the segment length.</span>
+<span class="sd">    6. Averages the two PSDs and collapses each segment to a scalar RMS</span>
+<span class="sd">       uncertainty: ``sqrt(sum(PSD * delta_f))`` in metres.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    line_pair : tuple of int</span>
+<span class="sd">        ``(col_left, col_right)`` — column indices of two adjacent tracklines</span>
+<span class="sd">        in ``restored_mask``.</span>
+<span class="sd">    restored_mask : np.ndarray of bool</span>
+<span class="sd">        Clean line mask in the rotated frame, used to identify valid row</span>
+<span class="sd">        extents for each line.</span>
+<span class="sd">    current_depth_raster : np.ndarray of float</span>
+<span class="sd">        Depth values at trackline pixels (NaN elsewhere), as returned by</span>
+<span class="sd">        :func:`assign_depths_to_lines`.</span>
+<span class="sd">    resolution : float</span>
+<span class="sd">        Spatial sampling interval in metres per pixel, forwarded to</span>
+<span class="sd">        :func:`compute_uncertainty` to convert FFT bins to physical</span>
+<span class="sd">        frequencies (cycles/m).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict or None</span>
+<span class="sd">        ``None`` if the two lines have no shared row overlap or if the shared</span>
+<span class="sd">        overlap is shorter than ``linespan`` (not enough samples for one</span>
+<span class="sd">        segment).  Otherwise a dict with keys:</span>
+
+<span class="sd">        - ``'uncertainty_rms'`` : np.ndarray, shape ``(n_segments,)`` —</span>
+<span class="sd">          RMS uncertainty per overlapping segment in metres.</span>
+<span class="sd">        - ``'row_start'`` : int — first shared row (inclusive).</span>
+<span class="sd">        - ``'row_end'``   : int — last shared row (exclusive).</span>
+<span class="sd">        - ``'col_start'`` : int — first gap column (``line_pair[0] + 1``).</span>
+<span class="sd">        - ``'col_end'``   : int — last gap column (exclusive, ``line_pair[1]``).</span>
+<span class="sd">        - ``'linespan'``  : int — inter-line distance in pixels, which equals</span>
+<span class="sd">          the analysis segment length.</span>
+<span class="sd">    """</span>
+    <span class="n">col1</span><span class="p">,</span> <span class="n">col2</span>  <span class="o">=</span> <span class="n">line_pair</span>
+    <span class="n">linespan</span>    <span class="o">=</span> <span class="n">col2</span> <span class="o">-</span> <span class="n">col1</span>
+
+    <span class="n">rows1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">restored_mask</span><span class="p">[:,</span> <span class="n">col1</span><span class="p">])[:,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">rows2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">restored_mask</span><span class="p">[:,</span> <span class="n">col2</span><span class="p">])[:,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rows1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">rows2</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">r1_min</span><span class="p">,</span> <span class="n">r1_max</span> <span class="o">=</span> <span class="n">rows1</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">rows1</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="n">r2_min</span><span class="p">,</span> <span class="n">r2_max</span> <span class="o">=</span> <span class="n">rows2</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">rows2</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="n">row_start</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">r1_min</span><span class="p">,</span> <span class="n">r2_min</span><span class="p">)</span>
+    <span class="n">row_end</span>   <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">r1_max</span><span class="p">,</span> <span class="n">r2_max</span><span class="p">)</span>
+
+    <span class="c1"># Need at least linespan rows of shared overlap for one full segment</span>
+    <span class="k">if</span> <span class="n">row_end</span> <span class="o">&lt;=</span> <span class="n">row_start</span> <span class="ow">or</span> <span class="p">(</span><span class="n">row_end</span> <span class="o">-</span> <span class="n">row_start</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">linespan</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="c1"># --- Interpolate depth gaps along each line ---</span>
+    <span class="n">full_rows1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">r1_min</span><span class="p">,</span> <span class="n">r1_max</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">full_rows2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">r2_min</span><span class="p">,</span> <span class="n">r2_max</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">depth1</span>     <span class="o">=</span> <span class="n">current_depth_raster</span><span class="p">[</span><span class="n">rows1</span><span class="p">,</span> <span class="n">col1</span><span class="p">]</span>
+    <span class="n">depth2</span>     <span class="o">=</span> <span class="n">current_depth_raster</span><span class="p">[</span><span class="n">rows2</span><span class="p">,</span> <span class="n">col2</span><span class="p">]</span>
+    <span class="n">interp1</span>    <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">full_rows1</span><span class="p">,</span> <span class="n">rows1</span><span class="p">,</span> <span class="n">depth1</span><span class="p">,</span> <span class="n">left</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="n">interp2</span>    <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">full_rows2</span><span class="p">,</span> <span class="n">rows2</span><span class="p">,</span> <span class="n">depth2</span><span class="p">,</span> <span class="n">left</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+
+    <span class="c1"># --- Clip to shared row range ---</span>
+    <span class="n">shared1</span> <span class="o">=</span> <span class="n">interp1</span><span class="p">[</span><span class="n">row_start</span> <span class="o">-</span> <span class="n">r1_min</span> <span class="p">:</span> <span class="n">row_start</span> <span class="o">-</span> <span class="n">r1_min</span> <span class="o">+</span> <span class="p">(</span><span class="n">row_end</span> <span class="o">-</span> <span class="n">row_start</span><span class="p">)]</span>
+    <span class="n">shared2</span> <span class="o">=</span> <span class="n">interp2</span><span class="p">[</span><span class="n">row_start</span> <span class="o">-</span> <span class="n">r2_min</span> <span class="p">:</span> <span class="n">row_start</span> <span class="o">-</span> <span class="n">r2_min</span> <span class="o">+</span> <span class="p">(</span><span class="n">row_end</span> <span class="o">-</span> <span class="n">row_start</span><span class="p">)]</span>
+
+    <span class="c1"># --- DC removal: subtract mean so the spectrum captures roughness only ---</span>
+    <span class="n">shared1</span> <span class="o">=</span> <span class="n">shared1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">shared1</span><span class="p">)</span>
+    <span class="n">shared2</span> <span class="o">=</span> <span class="n">shared2</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">shared2</span><span class="p">)</span>
+
+    <span class="c1"># --- Spectral energy via compute_uncertainty ---</span>
+    <span class="n">seg_energy1</span><span class="p">,</span> <span class="n">freqs</span> <span class="o">=</span> <span class="n">compute_uncertainty</span><span class="p">(</span><span class="n">shared1</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="n">resolution</span><span class="p">,</span>
+                                             <span class="n">line_spacing</span><span class="o">=</span><span class="n">linespan</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">)</span>
+    <span class="n">seg_energy2</span><span class="p">,</span> <span class="n">_</span>     <span class="o">=</span> <span class="n">compute_uncertainty</span><span class="p">(</span><span class="n">shared2</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="n">resolution</span><span class="p">,</span>
+                                             <span class="n">line_spacing</span><span class="o">=</span><span class="n">linespan</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">)</span>
+
+    <span class="c1"># --- Average spectra, then collapse to scalar RMS per segment ---</span>
+    <span class="c1"># avg_energy      = (seg_energy1 + seg_energy2) / 2.0  # (n_segments, n_freqs) m²/Hz</span>
+
+    <span class="c1"># Use the left half of the spectrum (one-sided PSD) for RMS calculation</span>
+    <span class="n">seg_energy2</span> <span class="o">=</span> <span class="n">seg_energy2</span><span class="p">[:,</span> <span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># Reverse the second spectrum to align frequencies</span>
+    <span class="c1"># if number of frequency bins is odd, we need to take care of the middle bin</span>
+    <span class="n">avg_energy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">seg_energy2</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">seg_energy1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">mid_bin</span> <span class="o">=</span> <span class="n">seg_energy1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">//</span> <span class="mi">2</span>
+        <span class="n">avg_energy</span><span class="p">[:,</span> <span class="n">mid_bin</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">seg_energy1</span><span class="p">[:,</span> <span class="n">mid_bin</span><span class="p">]</span> <span class="o">+</span> <span class="n">seg_energy2</span><span class="p">[:,</span> <span class="n">mid_bin</span><span class="p">])</span> <span class="o">/</span> <span class="mf">2.0</span>
+        <span class="n">avg_energy</span><span class="p">[:,</span> <span class="p">:</span><span class="n">mid_bin</span><span class="p">]</span> <span class="o">=</span> <span class="n">seg_energy1</span><span class="p">[:,</span> <span class="p">:</span><span class="n">mid_bin</span><span class="p">]</span>
+        <span class="n">avg_energy</span><span class="p">[:,</span> <span class="n">mid_bin</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span> <span class="o">=</span> <span class="n">seg_energy2</span><span class="p">[:,</span> <span class="n">mid_bin</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mid_bin</span> <span class="o">=</span> <span class="n">seg_energy1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">//</span> <span class="mi">2</span>
+        <span class="n">avg_energy</span><span class="p">[:,</span> <span class="p">:</span><span class="n">mid_bin</span><span class="p">]</span> <span class="o">=</span> <span class="n">seg_energy1</span><span class="p">[:,</span> <span class="p">:</span><span class="n">mid_bin</span><span class="p">]</span>
+        <span class="n">avg_energy</span><span class="p">[:,</span> <span class="n">mid_bin</span><span class="p">:]</span> <span class="o">=</span> <span class="n">seg_energy1</span><span class="p">[:,</span> <span class="n">mid_bin</span><span class="p">:]</span>
+
+    <span class="n">delta_f</span>         <span class="o">=</span> <span class="n">freqs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">freqs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">uncertainty_rms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">avg_energy</span> <span class="o">*</span> <span class="n">delta_f</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>  <span class="c1"># (n_segments,) m</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">'uncertainty_rms'</span><span class="p">:</span> <span class="n">uncertainty_rms</span><span class="p">,</span>
+        <span class="s1">'row_start'</span><span class="p">:</span>  <span class="n">row_start</span><span class="p">,</span>
+        <span class="s1">'row_end'</span><span class="p">:</span>    <span class="n">row_end</span><span class="p">,</span>
+        <span class="s1">'col_start'</span><span class="p">:</span>  <span class="n">col1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s1">'col_end'</span><span class="p">:</span>    <span class="n">col2</span><span class="p">,</span>
+        <span class="s1">'linespan'</span><span class="p">:</span>   <span class="n">linespan</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="build_uncertainty_raster">
+<a class="viewcode-back" href="../../../nbs_uncles.pipeline.html#nbs_uncles.pipeline.uncertainty.build_uncertainty_raster">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_uncertainty_raster</span><span class="p">(</span>
+    <span class="n">peaks</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">restored_mask</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">current_depth_raster</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">resolution</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'psd'</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Fill an uncertainty raster for all adjacent trackline pairs.</span>
+
+<span class="sd">    Iterates over every consecutive pair of detected tracklines, calls</span>
+<span class="sd">    :func:`process_line_pair` to compute a per-segment RMS uncertainty, and</span>
+<span class="sd">    tiles each scalar uncertainty value uniformly across the inter-line gap.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    peaks : np.ndarray of int</span>
+<span class="sd">        Sorted column indices of detected tracklines, as returned by</span>
+<span class="sd">        :func:`detect_trackline_positions`.</span>
+<span class="sd">    restored_mask : np.ndarray of bool</span>
+<span class="sd">        Clean line mask in the rotated frame (same frame as</span>
+<span class="sd">        ``current_depth_raster``).</span>
+<span class="sd">    current_depth_raster : np.ndarray of float</span>
+<span class="sd">        Depth values at trackline pixels; NaN elsewhere, as returned by</span>
+<span class="sd">        :func:`assign_depths_to_lines`.</span>
+<span class="sd">    resolution : float</span>
+<span class="sd">        Spatial sampling interval in metres per pixel, forwarded to</span>
+<span class="sd">        :func:`process_line_pair`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    uncertainty_raster : np.ndarray of float</span>
+<span class="sd">        Array of the same shape as ``current_depth_raster``.  Gap pixels</span>
+<span class="sd">        between adjacent tracklines carry the RMS interpolation uncertainty</span>
+<span class="sd">        in metres; all other pixels remain ``NaN``.</span>
+<span class="sd">    """</span>
+    <span class="n">uncertainty_raster</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">current_depth_raster</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">col1</span><span class="p">,</span> <span class="n">col2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">peaks</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">peaks</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">process_line_pair</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">col1</span><span class="p">,</span> <span class="n">col2</span><span class="p">),</span> <span class="n">restored_mask</span><span class="p">,</span> <span class="n">current_depth_raster</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="n">u_rms</span>     <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">'uncertainty_rms'</span><span class="p">]</span>
+        <span class="n">row_start</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">'row_start'</span><span class="p">]</span>
+        <span class="n">row_end</span>   <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">'row_end'</span><span class="p">]</span>
+        <span class="n">col_start</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">'col_start'</span><span class="p">]</span>
+        <span class="n">col_end</span>   <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">'col_end'</span><span class="p">]</span>
+        <span class="n">linespan</span>  <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">'linespan'</span><span class="p">]</span>
+        <span class="n">step</span>      <span class="o">=</span> <span class="n">linespan</span> <span class="o">-</span> <span class="mi">1</span>
+
+        <span class="k">for</span> <span class="n">seg_idx</span><span class="p">,</span> <span class="n">u_val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">u_rms</span><span class="p">):</span>
+            <span class="n">seg_row_start</span> <span class="o">=</span> <span class="n">row_start</span> <span class="o">+</span> <span class="n">seg_idx</span> <span class="o">*</span> <span class="n">step</span>
+            <span class="n">seg_row_end</span>   <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">seg_row_start</span> <span class="o">+</span> <span class="n">linespan</span><span class="p">,</span> <span class="n">row_end</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">seg_row_start</span> <span class="o">&gt;=</span> <span class="n">row_end</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="n">uncertainty_raster</span><span class="p">[</span><span class="n">seg_row_start</span><span class="p">:</span><span class="n">seg_row_end</span><span class="p">,</span> <span class="n">col_start</span><span class="p">:</span><span class="n">col_end</span><span class="p">]</span> <span class="o">=</span> <span class="n">u_val</span>
+
+    <span class="k">return</span> <span class="n">uncertainty_raster</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Francis Corpuz, Elias Edideran, Glen Rice.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

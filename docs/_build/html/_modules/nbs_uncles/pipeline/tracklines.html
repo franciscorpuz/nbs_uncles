@@ -1,0 +1,274 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>nbs_uncles.pipeline.tracklines &mdash; nbs_uncles  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            nbs_uncles
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">API Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">nbs_uncles</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">nbs_uncles</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">nbs_uncles.pipeline.tracklines</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for nbs_uncles.pipeline.tracklines</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.signal</span><span class="w"> </span><span class="kn">import</span> <span class="n">find_peaks</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.spatial</span><span class="w"> </span><span class="kn">import</span> <span class="n">cKDTree</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skimage.transform</span><span class="w"> </span><span class="kn">import</span> <span class="n">rotate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skimage.morphology</span><span class="w"> </span><span class="kn">import</span> <span class="n">remove_small_objects</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skimage.measure</span><span class="w"> </span><span class="kn">import</span> <span class="n">label</span><span class="p">,</span> <span class="n">regionprops</span>
+
+
+<div class="viewcode-block" id="detect_trackline_positions">
+<a class="viewcode-back" href="../../../nbs_uncles.pipeline.html#nbs_uncles.pipeline.tracklines.detect_trackline_positions">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">detect_trackline_positions</span><span class="p">(</span>
+    <span class="n">angle_mask</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">bathy_binary</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">angle</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">min_line_factor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+    <span class="n">band_width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span>
+    <span class="n">min_blob_pct</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Detect survey trackline column positions for a single dominant angle.</span>
+
+<span class="sd">    Rotates the angle-specific binary mask so that lines of the target</span>
+<span class="sd">    orientation become vertical, finds their column positions from the</span>
+<span class="sd">    column-sum projection, then returns a clean single-pixel-wide line mask</span>
+<span class="sd">    with noise blobs removed.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    angle_mask : np.ndarray of bool</span>
+<span class="sd">        Binary mask of pixels whose local orientation matches the target</span>
+<span class="sd">        angle (produced by thresholding :func:`compute_local_orientation`</span>
+<span class="sd">        output).</span>
+<span class="sd">    bathy_binary : np.ndarray of bool</span>
+<span class="sd">        Full binary coverage mask (all valid pixels).  Used to harvest the</span>
+<span class="sd">        full line row extent rather than just the thinned skeleton pixels.</span>
+<span class="sd">    angle : float</span>
+<span class="sd">        Dominant trackline angle in degrees, as returned by</span>
+<span class="sd">        :func:`compute_dominant_angle_radon_transform`.</span>
+<span class="sd">    min_line_factor : float, optional</span>
+<span class="sd">        Minimum peak height as a fraction of the tallest projection peak.</span>
+<span class="sd">        Peaks shorter than ``min_line_factor * max(projection)`` are ignored.</span>
+<span class="sd">        Default is ``0.1`` (10 % of the maximum projection height).</span>
+<span class="sd">    band_width : int, optional</span>
+<span class="sd">        Minimum horizontal separation between adjacent peaks in pixels.</span>
+<span class="sd">        Should approximate the expected inter-line spacing so that one wide</span>
+<span class="sd">        line is not split into two peaks.  Default is ``40``.</span>
+<span class="sd">    min_blob_pct : float, optional</span>
+<span class="sd">        After the line mask is built, connected components smaller than</span>
+<span class="sd">        ``min_blob_pct * largest_component`` are discarded as noise.</span>
+<span class="sd">        Default is ``0.1`` (10 % of the largest component area).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    peaks : np.ndarray of int</span>
+<span class="sd">        Column indices of detected tracklines in the rotated frame, sorted</span>
+<span class="sd">        in ascending order.</span>
+<span class="sd">    restored_mask : np.ndarray of bool</span>
+<span class="sd">        Single-pixel-wide vertical line mask in the rotated frame, with</span>
+<span class="sd">        noise blobs removed.  Same spatial extent as the rotated input images.</span>
+<span class="sd">    angle_to_rotate : float</span>
+<span class="sd">        Forward rotation angle applied (``90 - angle``).  Pass this to</span>
+<span class="sd">        :func:`undo_rotation` to recover the original orientation.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If no valid bathy pixels exist inside the projection band around a</span>
+<span class="sd">        detected peak.  Try increasing ``band_width`` or lowering</span>
+<span class="sd">        ``min_line_factor``.</span>
+<span class="sd">    """</span>
+    <span class="n">angle_to_rotate</span> <span class="o">=</span> <span class="mf">90.0</span> <span class="o">-</span> <span class="n">angle</span>
+
+    <span class="n">rotated_mask</span>  <span class="o">=</span> <span class="n">rotate</span><span class="p">(</span><span class="n">angle_mask</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span>
+                           <span class="n">angle</span><span class="o">=</span><span class="n">angle_to_rotate</span><span class="p">,</span> <span class="n">resize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                           <span class="n">preserve_range</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="n">rotated_bathy</span> <span class="o">=</span> <span class="n">rotate</span><span class="p">(</span><span class="n">bathy_binary</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span>
+                           <span class="n">angle</span><span class="o">=</span><span class="n">angle_to_rotate</span><span class="p">,</span> <span class="n">resize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                           <span class="n">preserve_range</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+
+    <span class="c1"># Column projection — each column's sum counts skeleton pixels belonging</span>
+    <span class="c1"># to a line at that x-position in the rotated frame</span>
+    <span class="n">projection</span>      <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">rotated_mask</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">min_line_length</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">projection</span><span class="p">)</span> <span class="o">*</span> <span class="n">min_line_factor</span><span class="p">)</span>
+
+    <span class="n">peaks</span><span class="p">,</span> <span class="n">properties</span> <span class="o">=</span> <span class="n">find_peaks</span><span class="p">(</span>
+        <span class="n">projection</span><span class="p">,</span>
+        <span class="n">height</span><span class="o">=</span><span class="n">min_line_length</span><span class="p">,</span>
+        <span class="n">distance</span><span class="o">=</span><span class="n">band_width</span><span class="p">,</span>
+        <span class="n">prominence</span><span class="o">=</span><span class="n">min_line_length</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Stamp each peak column with all valid bathy rows inside its base window</span>
+    <span class="c1"># so every detected line is exactly 1 pixel wide at the peak position</span>
+    <span class="n">line_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">rotated_bathy</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">peak</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">peaks</span><span class="p">):</span>
+        <span class="n">min_col</span>     <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">properties</span><span class="p">[</span><span class="s1">'left_bases'</span><span class="p">][</span><span class="n">idx</span><span class="p">])</span>
+        <span class="n">max_col</span>     <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">rotated_mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">properties</span><span class="p">[</span><span class="s1">'right_bases'</span><span class="p">][</span><span class="n">idx</span><span class="p">])</span>
+        <span class="n">valid_pts</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">rotated_bathy</span><span class="p">[:,</span> <span class="n">min_col</span><span class="p">:</span><span class="n">max_col</span><span class="p">])</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">valid_pts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"No valid bathy pixels in the band around peak column </span><span class="si">{</span><span class="n">peak</span><span class="si">}</span><span class="s2">. "</span>
+                <span class="s2">"Try increasing band_width or lowering min_line_factor."</span>
+            <span class="p">)</span>
+        <span class="n">valid_rows</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">valid_pts</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="n">line_mask</span><span class="p">[</span><span class="n">valid_rows</span><span class="p">,</span> <span class="n">peak</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="c1"># Remove components smaller than min_blob_pct of the largest component</span>
+    <span class="n">label_img</span>   <span class="o">=</span> <span class="n">label</span><span class="p">(</span><span class="n">line_mask</span><span class="p">)</span>
+    <span class="n">props</span>       <span class="o">=</span> <span class="n">regionprops</span><span class="p">(</span><span class="n">label_img</span><span class="p">)</span>
+    <span class="n">blob_sizes</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">r</span><span class="o">.</span><span class="n">area</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">props</span><span class="p">])</span>
+    <span class="n">noise_limit</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">blob_sizes</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">*</span> <span class="n">min_blob_pct</span><span class="p">)</span>
+    <span class="n">restored_mask</span> <span class="o">=</span> <span class="n">remove_small_objects</span><span class="p">(</span><span class="n">line_mask</span><span class="p">,</span> <span class="n">max_size</span><span class="o">=</span><span class="n">noise_limit</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">peaks</span><span class="p">),</span> <span class="n">restored_mask</span><span class="p">,</span> <span class="n">angle_to_rotate</span></div>
+
+
+
+<div class="viewcode-block" id="assign_depths_to_lines">
+<a class="viewcode-back" href="../../../nbs_uncles.pipeline.html#nbs_uncles.pipeline.tracklines.assign_depths_to_lines">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">assign_depths_to_lines</span><span class="p">(</span>
+    <span class="n">restored_mask</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">bathy_binary</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">bathy_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+    <span class="n">angle_to_rotate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Assign real depth values to detected trackline pixels via nearest-neighbour lookup.</span>
+
+<span class="sd">    Each pixel in ``restored_mask`` (clean line mask in the rotated frame) is</span>
+<span class="sd">    assigned the depth value of its nearest valid source pixel from the rotated</span>
+<span class="sd">    bathymetric raster, found using a ``cKDTree`` search.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    restored_mask : np.ndarray of bool</span>
+<span class="sd">        Clean single-pixel-wide line mask in the rotated frame, as returned</span>
+<span class="sd">        by :func:`detect_trackline_positions`.</span>
+<span class="sd">    bathy_binary : np.ndarray of bool</span>
+<span class="sd">        Binary coverage mask of valid depth pixels in the *original*</span>
+<span class="sd">        (unrotated) orientation, e.g. from :func:`build_coverage_mask`.</span>
+<span class="sd">    bathy_data : dict</span>
+<span class="sd">        Raster dictionary as returned by :func:`read_file`.  The raw depth</span>
+<span class="sd">        array is read from ``bathy_data['data']``.</span>
+<span class="sd">    angle_to_rotate : float</span>
+<span class="sd">        Forward rotation angle (``90 - dominant_angle``) as returned by</span>
+<span class="sd">        :func:`detect_trackline_positions`.  Applied to both ``bathy_binary``</span>
+<span class="sd">        and the depth array to bring them into the same rotated frame as</span>
+<span class="sd">        ``restored_mask``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    current_depth_raster : np.ndarray of float</span>
+<span class="sd">        2-D depth array of the same shape as ``restored_mask``.  Pixels that</span>
+<span class="sd">        belong to detected tracklines carry their assigned depth value; all</span>
+<span class="sd">        other pixels are ``NaN``.</span>
+<span class="sd">    """</span>
+    <span class="n">rotated_bathy</span> <span class="o">=</span> <span class="n">rotate</span><span class="p">(</span><span class="n">bathy_binary</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span>
+                           <span class="n">angle</span><span class="o">=</span><span class="n">angle_to_rotate</span><span class="p">,</span> <span class="n">resize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                           <span class="n">preserve_range</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="n">rotated_depth</span> <span class="o">=</span> <span class="n">rotate</span><span class="p">(</span><span class="n">bathy_data</span><span class="p">[</span><span class="s1">'data'</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span>
+                           <span class="n">angle</span><span class="o">=</span><span class="n">angle_to_rotate</span><span class="p">,</span> <span class="n">resize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                           <span class="n">preserve_range</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">source_pts</span>    <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">rotated_bathy</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">source_values</span> <span class="o">=</span> <span class="n">rotated_depth</span><span class="p">[</span><span class="n">source_pts</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">source_pts</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]]</span>
+    <span class="n">dest_pts</span>      <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">restored_mask</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+    <span class="n">tree</span> <span class="o">=</span> <span class="n">cKDTree</span><span class="p">(</span><span class="n">source_pts</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">nearest_idx</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">dest_pts</span><span class="p">)</span>
+
+    <span class="n">current_depth_raster</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">restored_mask</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">current_depth_raster</span><span class="p">[</span><span class="n">dest_pts</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">dest_pts</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">source_values</span><span class="p">[</span><span class="n">nearest_idx</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">current_depth_raster</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Francis Corpuz, Elias Edideran, Glen Rice.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
