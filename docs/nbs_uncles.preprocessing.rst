@@ -27,11 +27,3 @@ nbs\_uncles.preprocessing.orientation module
    :members:
    :show-inheritance:
    :undoc-members:
-
-Module contents
----------------
-
-.. automodule:: nbs_uncles.preprocessing
-   :members:
-   :show-inheritance:
-   :undoc-members:

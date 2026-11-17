@@ -1,6 +1,6 @@
 import numpy as np
 
-from interpolation_uncertainty.methods.spectral import compute_uncertainty
+from nbs_uncles.methods.spectral import spectral_estimator
 
 
 def process_line_pair(

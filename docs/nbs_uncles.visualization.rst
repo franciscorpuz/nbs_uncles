@@ -11,11 +11,3 @@ nbs\_uncles.visualization.plotting module
    :members:
    :show-inheritance:
    :undoc-members:
-
-Module contents
----------------
-
-.. automodule:: nbs_uncles.visualization
-   :members:
-   :show-inheritance:
-   :undoc-members:

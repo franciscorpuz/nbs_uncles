@@ -12,10 +12,3 @@ nbs\_uncles.io.readers module
    :show-inheritance:
    :undoc-members:
 
-Module contents
----------------
-
-.. automodule:: nbs_uncles.io
-   :members:
-   :show-inheritance:
-   :undoc-members:

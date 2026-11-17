@@ -20,10 +20,3 @@ nbs\_uncles.methods.statistical module
    :show-inheritance:
    :undoc-members:
 
-Module contents
----------------
-
-.. automodule:: nbs_uncles.methods
-   :members:
-   :show-inheritance:
-   :undoc-members:

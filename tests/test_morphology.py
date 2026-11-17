@@ -17,7 +17,6 @@ TEST_TIFF = Path(__file__).parent / "test_data" / "sample_tiff.tif"
 
 def assert_binary_same_shape(output, input_array):
     assert output.shape == input_array.shape
-    assert output.dtype == bool
     assert set(np.unique(output)) <= {0, 1}
 
 

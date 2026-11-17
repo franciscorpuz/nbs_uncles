@@ -12,7 +12,7 @@ from .preprocessing import (
     undo_rotation,
     x_distance,
 )
-from .methods import spectral_estimator, statistical_estimator
+from .methods import spectral, statistical
 from .pipeline import (
     detect_trackline_positions,
     assign_depths_to_lines,

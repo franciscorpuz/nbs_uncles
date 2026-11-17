@@ -27,7 +27,7 @@ extensions =  [
 html_theme = 'sphinx_rtd_theme'
 
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
-
+autodoc_mock_imports = ["gdal", "osgeo"]
 
 
 # -- Options for HTML output -------------------------------------------------

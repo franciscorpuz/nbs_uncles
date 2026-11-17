@@ -36,10 +36,3 @@ nbs\_uncles.orientation.orientation\_via\_Radon module
    :show-inheritance:
    :undoc-members:
 
-Module contents
----------------
-
-.. automodule:: nbs_uncles.orientation
-   :members:
-   :show-inheritance:
-   :undoc-members:

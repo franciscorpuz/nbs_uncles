@@ -29,10 +29,10 @@ def test_subpackage_imports():
     from nbs_uncles.io import read_file
     from nbs_uncles.visualization import show_depth
     from nbs_uncles.preprocessing import build_coverage_mask
-    from nbs_uncles.methods import compute_uncertainty
+    from nbs_uncles.methods import spectral_estimator, statistical_estimator
     from nbs_uncles.pipeline import detect_trackline_positions
     assert callable(read_file)
     assert callable(show_depth)
     assert callable(build_coverage_mask)
-    assert callable(compute_uncertainty)
+    assert callable(spectral_estimator)
     assert callable(detect_trackline_positions)

@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def compute_uncertainty(
+def spectral_estimator(
     signal: np.ndarray,
     resolution: float,
     line_spacing: int,

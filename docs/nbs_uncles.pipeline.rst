@@ -19,11 +19,3 @@ nbs\_uncles.pipeline.uncertainty module
    :members:
    :show-inheritance:
    :undoc-members:
-
-Module contents
----------------
-
-.. automodule:: nbs_uncles.pipeline
-   :members:
-   :show-inheritance:
-   :undoc-members:
